@@ -125,7 +125,7 @@ export default function Predios({ cu }) {
       cultivo: datos.cultivo,
       superficieDeclaradaHa: numero(datos.superficieDeclaradaHa),
       numeroTituloInra: datos.numeroTituloInra || null,
-      titularCi: datos.titularCi.trim() || null,
+      titularCi: (datos.numeroTituloInra.trim() && datos.titularCi.trim()) || null,
       superficieTituladaHa: String(datos.superficieTituladaHa).trim() ? numero(datos.superficieTituladaHa) : null,
       desmonteDeclaradoHa: String(datos.desmonteDeclaradoHa).trim() ? numero(datos.desmonteDeclaradoHa) : null,
     }

@@ -72,7 +72,8 @@ export function validarPredio(d, { requiereProductor = false } = {}) {
   const titulada = String(d.superficieTituladaHa ?? '').trim()
   if (ci && !/^\d{5,10}$/.test(ci)) errores.titularCi = 'El CI debe tener de 5 a 10 dígitos.'
   if (titulada && !(numero(titulada) > 0)) errores.superficieTituladaHa = 'Debe ser mayor a cero.'
-  if ((ci || titulada) && !d.numeroTituloInra.trim()) errores.numeroTituloInra = 'Escribe el número de título.'
+  // El CI viene precargado con el del productor: solo, no obliga a tener título. La superficie titulada sí.
+  if (titulada && !d.numeroTituloInra.trim()) errores.numeroTituloInra = 'Escribe el número de título.'
   return errores
 }
 

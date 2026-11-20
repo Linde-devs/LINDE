@@ -69,12 +69,24 @@ export default function Documentos({ cu }) {
   }
 
   // El formulario se precarga con lo que ya se sabe: el número de título declarado en el predio y el CI del productor.
-  // El título del INRA se registra con los datos del predio (Gestionar predios); aquí se agregan los documentos de la ABT.
-  function abrir(tipo = 'PlanOrdenamientoPredial') {
+  // El título del INRA se puede registrar aquí o con los datos del predio; si el predio ya lo tiene, se edita allá.
+  function abrir() {
     setErrores({})
     setAviso('')
-    setFormulario({ tipo, numero: '', titularCi: '', superficieHa: '' })
+    if (tieneTitulo) {
+      setFormulario({ tipo: 'PlanOrdenamientoPredial', numero: '', titularCi: '', superficieHa: '' })
+      return
+    }
+    setFormulario({
+      tipo: 'TituloPropiedad',
+      numero: predio?.numeroTituloInra ?? '',
+      titularCi: esAdmin ? '' : (usuarioActual.ci ?? ''),
+      superficieHa: '',
+    })
   }
+
+  // El número de título también queda en el predio: se recargan los predios para que el resto de la pantalla lo vea.
+  const recargarPredios = () => api('/predios').then(setPredios).catch(() => {})
 
   function cambiar(e) {
     const { name, value } = e.target
@@ -118,6 +130,7 @@ export default function Documentos({ cu }) {
       setAviso(`${tiposDocumento[formulario.tipo]} registrado.`)
       setFormulario(null)
       await cargarDocumentos(seleccionado)
+      if (formulario.tipo === 'TituloPropiedad') await recargarPredios()
     } catch (err) {
       setErrores({ general: err.message })
     } finally {
@@ -186,10 +199,17 @@ export default function Documentos({ cu }) {
             </button>
           </div>
           {errores.general && <div className="mensaje mensaje-error">{errores.general}</div>}
+          {tieneTitulo && (
+            <p className="nota">
+              Este predio ya tiene su título de propiedad ({titulo.numero}), por eso no aparece en la lista: cada predio tiene
+              uno solo. Para corregirlo,{' '}
+              <Link to="/app/predios" state={{ editar: predio.id }}>edítalo en el predio</Link>.
+            </p>
+          )}
 
           <div className="fila">
             <Campo name="tipo" etiqueta="Tipo de documento" valor={formulario.tipo} onChange={cambiar}>
-              {Object.entries(tiposDocumento).filter(([valor]) => valor !== 'TituloPropiedad').map(([valor, texto]) => (
+              {Object.entries(tiposDocumento).filter(([valor]) => valor !== 'TituloPropiedad' || !tieneTitulo).map(([valor, texto]) => (
                 <option key={valor} value={valor}>{texto}</option>
               ))}
             </Campo>
@@ -269,7 +289,7 @@ export default function Documentos({ cu }) {
 
         {!tieneTitulo && (
           <p className="nota">
-            Falta el título de propiedad del INRA. Se registra con los datos del predio:{' '}
+            Falta el título de propiedad del INRA. Agrégalo con el botón Agregar documento o con los datos del predio:{' '}
             <Link to="/app/predios" state={{ editar: predio?.id }}>completar el título</Link>.
           </p>
         )}
