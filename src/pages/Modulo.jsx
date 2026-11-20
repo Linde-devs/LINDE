@@ -1,26 +1,12 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { casosUso } from '../data/casosUso.js'
+import Encabezado from '../components/Encabezado.jsx'
 
 // Pantalla genérica para los módulos que todavía no se implementan.
-export default function Modulo() {
-  const { ruta } = useParams()
-  const cu = casosUso.find((c) => c.ruta === ruta)
-  if (!cu) return <Navigate to="/app" replace />
-
+export default function Modulo({ cu }) {
   const Icono = cu.icono
 
   return (
     <>
-      <Link to="/app" className="volver">
-        <ArrowLeft size={16} />
-        Volver al inicio
-      </Link>
-
-      <div className="pagina-encabezado">
-        <h1>{cu.nombre}</h1>
-        <p>{cu.descripcion}</p>
-      </div>
+      <Encabezado titulo={cu.nombre} descripcion={cu.descripcion} />
 
       <div className="vacio">
         <div className="tarjeta-icono grande">

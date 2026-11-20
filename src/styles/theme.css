@@ -38,6 +38,8 @@ a { color: var(--color-info-texto); }
 .btn-secundario { background: #fff; color: var(--color-primario); border-color: var(--color-primario); }
 .btn-secundario:hover { background: var(--color-primario); color: #fff; }
 .btn-bloque { width: 100%; margin-top: 8px; padding: 12px; font-size: 15px; }
+.btn:disabled { opacity: 0.7; cursor: wait; }
+.cargando { min-height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--color-texto-2); }
 
 /* Formularios */
 .campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; flex: 1; }
@@ -181,3 +183,201 @@ a { color: var(--color-info-texto); }
   .intro-cuerpo, .fila-inferior { grid-template-columns: 1fr; }
   .historial { border-right: none; border-bottom: 1px solid var(--color-borde); }
 }
+
+/* Pantallas de los casos de uso */
+.pagina-encabezado.con-acciones { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.acciones { display: flex; gap: 8px; }
+.contenedor > .intro:last-child { border-bottom: none; }
+.panel {
+  background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: 6px;
+  padding: 20px; margin-bottom: 16px;
+}
+.panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.panel-cabecera h2 { font-size: 17px; }
+.panel-pie { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.panel-texto { margin: 0 0 12px; font-size: 13px; color: var(--color-texto-2); line-height: 1.5; }
+.nota { margin: 12px 0 0; font-size: 13px; color: var(--color-info-texto); background: var(--color-info-fondo);
+  padding: 8px 12px; border-radius: var(--radio); }
+.mensaje-info { background: var(--color-info-fondo); color: var(--color-info-texto); }
+.espacio-arriba { margin-top: 16px; text-decoration: none; }
+.btn-icono {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  border: 1px solid transparent; border-radius: var(--radio); background: none;
+  color: var(--color-primario); cursor: pointer;
+}
+.btn-icono:hover { background: var(--color-primario); color: #fff; }
+.btn-icono.peligro { color: var(--color-error); }
+.btn-icono.peligro:hover { background: var(--color-error); color: #fff; }
+a.btn { text-decoration: none; }
+.campo select {
+  width: 100%; padding: 10px 12px; font-size: 14px; font-family: inherit;
+  border: 1px solid var(--color-borde); border-radius: var(--radio); background: #fff; color: var(--color-texto);
+}
+.campo select:focus { outline: none; border-color: var(--color-info); box-shadow: 0 0 0 3px var(--color-info-fondo); }
+.campo select.invalido { border-color: var(--color-error); }
+.archivo { display: block; margin-bottom: 12px; font-family: inherit; font-size: 14px; }
+
+/* Tablas */
+.tabla-contenedor { overflow-x: auto; }
+.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabla th {
+  text-align: left; font-weight: normal; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--color-texto-2); padding: 8px 10px; border-bottom: 1px solid var(--color-borde); white-space: nowrap;
+}
+.tabla td { padding: 10px; border-bottom: 1px solid var(--color-borde); vertical-align: middle; }
+.tabla tr:last-child td { border-bottom: none; }
+.tabla .numero { text-align: right; }
+.acciones-fila { white-space: nowrap; text-align: right; }
+
+/* Etiquetas de estado */
+.etiqueta { display: inline-block; padding: 3px 8px; border-radius: var(--radio); font-size: 12px; white-space: nowrap; }
+.etiqueta-neutra { background: var(--color-fondo); color: var(--color-texto-2); border: 1px solid var(--color-borde); }
+.etiqueta-info { background: var(--color-info-fondo); color: var(--color-info-texto); }
+.etiqueta-exito { background: var(--color-exito-fondo); color: var(--color-accion-hover); }
+.etiqueta-aviso { background: #FFF4E0; color: #8A5A00; }
+.etiqueta-error { background: var(--color-error-fondo); color: var(--color-error); }
+
+/* Polígonos y envío */
+.selector-predio { display: flex; align-items: center; gap: 12px; max-width: 640px; }
+.selector-predio .campo { margin-bottom: 16px; }
+.dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.dos-columnas .panel { margin-bottom: 0; }
+.columna { display: flex; flex-direction: column; gap: 16px; }
+.columna .mensaje { margin-bottom: 0; }
+.vista-poligono { width: 100%; height: auto; display: block; margin-bottom: 12px; }
+.vista-fondo { fill: var(--color-fondo); stroke: var(--color-borde); }
+.vista-area { fill: var(--color-accion); fill-opacity: 0.15; stroke: var(--color-primario); stroke-width: 2.5; stroke-linejoin: round; }
+.vista-vertice { fill: #fff; stroke: var(--color-primario); stroke-width: 2; }
+.vista-punto { fill: var(--color-info); }
+.vista-punto-halo { fill: var(--color-info); fill-opacity: 0.2; stroke: var(--color-info); stroke-width: 2; }
+.vista-texto { fill: var(--color-texto-2); font-size: 13px; font-family: Arial, Helvetica, sans-serif; }
+.datos { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; font-size: 14px; }
+.datos dt { color: var(--color-texto-2); }
+.datos dd { margin: 0; }
+.capas { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.capas li { border: 1px solid var(--color-borde); border-radius: var(--radio); padding: 12px 14px; }
+.capa-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.capas p { margin: 6px 0 0; font-size: 14px; color: var(--color-texto-2); line-height: 1.5; }
+
+/* Historial de la ventana principal */
+.lista-historial { list-style: none; margin: 0; padding: 0; }
+.lista-historial a {
+  display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-bottom: 1px solid var(--color-borde);
+  color: var(--color-texto); text-decoration: none;
+}
+.lista-historial li:last-child a { border-bottom: none; }
+.lista-historial a:hover { background: var(--color-fondo); }
+.lista-historial a > div { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lista-historial span { font-size: 13px; color: var(--color-texto-2); }
+.lista-historial svg { color: var(--color-texto-2); flex-shrink: 0; }
+.ver-todos { display: inline-block; margin-top: 12px; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .dos-columnas { grid-template-columns: 1fr; }
+  .selector-predio { flex-direction: column; align-items: stretch; }
+}
+
+/* Mapa del predio (Leaflet + OpenStreetMap) */
+.mapa-predio {
+  width: 100%; height: 320px; margin-bottom: 12px;
+  border: 1px solid var(--color-borde); border-radius: var(--radio); z-index: 0;
+}
+.centrado { text-align: center; }
+.sin-margen { margin: 0 0 16px; }
+.selector-modo { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid var(--color-borde); border-radius: var(--radio); overflow: hidden; }
+.selector-modo button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px;
+  border: none; background: #fff; color: var(--color-primario); font-family: inherit; font-size: 14px; cursor: pointer;
+}
+.selector-modo button + button { border-left: 1px solid var(--color-borde); }
+.selector-modo button.activo { background: var(--color-primario); color: #fff; }
+.vertices { margin-top: 12px; font-size: 14px; }
+.vertices summary { cursor: pointer; color: var(--color-info-texto); margin-bottom: 8px; }
+.vertices .tabla td, .vertices .tabla th { padding: 6px 10px; }
+
+/* Vista para revisión, alertas y expedientes */
+.mensaje-aviso { background: #FFF4E0; color: #8A5A00; }
+.lista-simple { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+.revision .dos-columnas { margin-bottom: 16px; }
+.expediente { background: #fff; border: 1px solid var(--color-borde); border-radius: var(--radio); padding: 24px; margin-bottom: 24px; }
+.expediente section { margin-top: 20px; }
+.expediente h3 { font-size: 15px; margin: 0 0 10px; }
+.expediente-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.expediente-cabecera h2 { font-size: 20px; margin: 2px 0; }
+.expediente-sistema, .expediente-fecha { margin: 0; font-size: 13px; color: var(--color-texto-2); }
+.expediente-leyenda { margin: 24px 0 0; padding-top: 12px; border-top: 1px solid var(--color-borde); font-size: 12px; color: var(--color-texto-2); line-height: 1.5; }
+.consulta { min-height: 100vh; background: var(--color-fondo); padding: 24px 0; }
+.consulta-buscador { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; max-width: 640px; margin-bottom: 16px; }
+.consulta-buscador .campo { flex: 1; min-width: 220px; margin-bottom: 0; }
+
+/* Al imprimir (o guardar como PDF) solo queda el contenido, sin menú ni botones. */
+@media print {
+  .no-imprimir, .topbar, .menu, aside, .volver, .btn { display: none !important; }
+  body, .consulta { background: #fff; }
+  .expediente, .panel { border: none; padding: 0; box-shadow: none; }
+  .mapa-predio { break-inside: avoid; }
+  .leaflet-control-zoom { display: none; }
+  .capas li { break-inside: avoid; }
+}
+
+/* Coordenadas bajo el cursor en el mapa */
+.mapa-coordenadas {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--color-borde);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font: 12px/1.4 ui-monospace, Consolas, monospace;
+  color: var(--color-texto);
+  pointer-events: none;
+}
+.mapa-predio { cursor: crosshair; }
+@media print { .mapa-coordenadas { display: none; } }
+
+/* Buscador de predios: cerrado muestra el predio elegido; con el foco se abre la lista desplazable */
+.buscador-predio { position: relative; max-width: 760px; margin-bottom: 16px; }
+.buscador-titulo { display: block; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+.buscador-cabecera {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: text;
+  background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio);
+}
+.buscador-predio.abierto .buscador-cabecera { border-color: var(--color-accion); box-shadow: 0 0 0 2px #2E7D3233; }
+.buscador-icono { color: var(--color-texto-2); flex-shrink: 0; }
+.buscador-cabecera input {
+  flex: 1; min-width: 0; border: none; outline: none; font: inherit; font-size: 15px;
+  color: var(--color-texto); background: transparent; padding: 4px 0; text-overflow: ellipsis;
+}
+.buscador-total { font-size: 13px; color: var(--color-texto-2); white-space: nowrap; }
+.buscador-lista {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 1100; margin: 4px 0 0; padding: 4px;
+  list-style: none; max-height: 260px; overflow-y: auto;
+  background: var(--color-superficie); border: 1px solid var(--color-borde); border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgba(22, 51, 48, 0.15);
+}
+.buscador-opcion {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.buscador-opcion.activo { background: var(--color-fondo); }
+.buscador-opcion.elegido { background: #E3F1EC; border-left-color: var(--color-accion); }
+.buscador-marca { width: 16px; color: var(--color-accion); display: flex; }
+.buscador-texto { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.buscador-texto strong { font-size: 14px; }
+.buscador-texto small { font-size: 12px; color: var(--color-texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.buscador-vacio { padding: 16px 10px; font-size: 14px; color: var(--color-texto-2); }
+
+/* Validar predio (CU-07): lista de requisitos */
+.requisitos { list-style: none; margin: 0 0 12px; padding: 0; border: 1px solid var(--color-borde); border-radius: var(--radio); }
+.requisitos li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--color-borde); }
+.requisitos li:last-child { border-bottom: none; }
+.requisitos li.cumplido svg { color: var(--color-accion); flex-shrink: 0; }
+.requisitos li.pendiente svg { color: var(--color-error); flex-shrink: 0; }
+.requisito-texto { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.requisito-texto strong { font-size: 14px; }
+.requisito-texto span { font-size: 13px; color: var(--color-texto-2); }
+.btn-chico { padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+.requisitos-titulo { margin: 0 0 6px; }
+.requisitos-faltantes { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; }
+
+.formulario-seccion { font-size: 15px; margin: 8px 0 10px; padding-top: 12px; border-top: 1px solid var(--color-borde); }
+.enlace-chico { font-size: 13px; white-space: nowrap; }
+

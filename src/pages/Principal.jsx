@@ -1,9 +1,10 @@
-import { History, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ChevronRight, History, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { ADMIN, PRODUCTOR, descripcionesRol } from '../data/casosUso.js'
 import IlustracionPredios from '../components/IlustracionPredios.jsx'
-
-// Por ahora el historial está vacío. Luego mostrará los predios verificados.
-const historial = []
+import Etiqueta from '../components/Etiqueta.jsx'
 
 function PoligonoADibujar() {
   const vertices = [
@@ -43,14 +44,26 @@ function PoligonoADibujar() {
 }
 
 export default function Principal() {
-  const { usuarioActual } = useAuth()
+  const { usuarioActual, api } = useAuth()
+  const navigate = useNavigate()
+  const registraPredios = usuarioActual.rol === PRODUCTOR || usuarioActual.rol === ADMIN
+
+  // Historial: los predios del productor (el administrador ve todos). Los más recientes primero.
+  const [historial, setHistorial] = useState([])
+  useEffect(() => {
+    if (!registraPredios) return
+    api('/predios')
+      .then(setHistorial)
+      .catch(() => setHistorial([]))
+  }, [api, registraPredios])
+
   const tieneHistorial = historial.length > 0
 
   return (
     <>
       <div className="pagina-encabezado">
         <h1>Bienvenido, {usuarioActual.nombre}</h1>
-        <p>Como administrador tienes acceso a todos los módulos del sistema.</p>
+        <p>{descripcionesRol[usuarioActual.rol]}</p>
       </div>
 
       <div className="contenedor">
@@ -75,34 +88,57 @@ export default function Principal() {
               </p>
               <p>
                 Si el predio está conforme, el sistema genera un expediente digital trazable para
-                presentarlo al SENASAG. Si encuentra una inconsistencia, genera una alerta para que un
-                verificador la revise. LINDE no emite la certificación: entrega la evidencia para que
-                el productor sepa si cumple antes de invertir tiempo y dinero en el trámite.
+                presentarlo al SENASAG. Si encuentra inconsistencias, el predio queda con alertas
+                priorizadas y el expediente las incluye, para que el productor las corrija o las muestre
+                al técnico que lo asesora. LINDE no emite la certificación: entrega la evidencia para
+                que el productor sepa si cumple antes de invertir tiempo y dinero en el trámite.
               </p>
             </div>
             <IlustracionPredios />
           </div>
         </section>
 
-        <div className="fila-inferior">
-          <section className="historial">
-            <h2 className="panel-titulo">
-              <History size={18} />
-              Historial
-            </h2>
-            {tieneHistorial ? null : (
-              <p className="panel-vacio">Aún no has registrado ningún predio.</p>
-            )}
-          </section>
+        {registraPredios && (
+          <div className="fila-inferior">
+            <section className="historial">
+              <h2 className="panel-titulo">
+                <History size={18} />
+                Historial
+              </h2>
+              {tieneHistorial ? (
+                <ul className="lista-historial">
+                  {historial.slice(0, 6).map((p) => (
+                    <li key={p.id}>
+                      <Link to={`/app/poligonos?predio=${p.id}`}>
+                        <div>
+                          <strong>{p.nombre}</strong>
+                          <span>
+                            {p.municipio} · {p.cultivo} · {p.superficieDeclaradaHa.toLocaleString('es-BO')} ha
+                            {usuarioActual.rol === ADMIN ? ` · ${p.productor}` : ''}
+                          </span>
+                        </div>
+                        <Etiqueta valor={p.estado} />
+                        <ChevronRight size={16} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="panel-vacio">Aún no has registrado ningún predio.</p>
+              )}
+              {historial.length > 6 && (
+                <Link to="/app/predios" className="ver-todos">Ver todos los predios ({historial.length})</Link>
+              )}
+            </section>
 
-          <section className="dibujo">
-            <PoligonoADibujar />
-            {/* El botón todavía no tiene acción. */}
-            <button className="btn btn-primario btn-grande">
-              {tieneHistorial ? (<><Plus size={18} />Nuevo predio</>) : 'Empezar'}
-            </button>
-          </section>
-        </div>
+            <section className="dibujo">
+              <PoligonoADibujar />
+              <button className="btn btn-primario btn-grande" onClick={() => navigate('/app/predios', { state: { nuevo: true } })}>
+                {tieneHistorial ? (<><Plus size={18} />Nuevo predio</>) : 'Empezar'}
+              </button>
+            </section>
+          </div>
+        )}
       </div>
     </>
   )

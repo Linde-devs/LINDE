@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { House, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { casosUso, grupos } from '../data/casosUso.js'
+import { casosUsoDeRol, grupos, nombresRol } from '../data/casosUso.js'
 import logo from '../assets/logo.png'
 
 export default function Layout() {
@@ -14,6 +14,9 @@ export default function Layout() {
   }
 
   const iniciales = `${usuarioActual.nombre[0] ?? ''}${usuarioActual.apellido[0] ?? ''}`.toUpperCase()
+
+  // RF-11: cada usuario ve solo las opciones de su rol. Un grupo sin opciones no se muestra.
+  const opciones = casosUsoDeRol(usuarioActual.rol)
 
   return (
     <div className="app">
@@ -28,22 +31,24 @@ export default function Layout() {
             <span>Inicio</span>
           </NavLink>
 
-          {grupos.map((grupo) => (
-            <div key={grupo} className="menu-grupo">
-              <p className="menu-titulo">{grupo}</p>
-              {casosUso
-                .filter((cu) => cu.grupo === grupo)
-                .map((cu) => {
-                  const Icono = cu.icono
-                  return (
-                    <NavLink key={cu.codigo} to={`/app/${cu.ruta}`} className="menu-item">
-                      <Icono size={18} />
-                      <span>{cu.nombre}</span>
-                    </NavLink>
-                  )
-                })}
-            </div>
-          ))}
+          {grupos
+            .filter((grupo) => opciones.some((cu) => cu.grupo === grupo))
+            .map((grupo) => (
+              <div key={grupo} className="menu-grupo">
+                <p className="menu-titulo">{grupo}</p>
+                {opciones
+                  .filter((cu) => cu.grupo === grupo)
+                  .map((cu) => {
+                    const Icono = cu.icono
+                    return (
+                      <NavLink key={cu.codigo} to={`/app/${cu.ruta}`} className="menu-item">
+                        <Icono size={18} />
+                        <span>{cu.nombre}</span>
+                      </NavLink>
+                    )
+                  })}
+              </div>
+            ))}
         </nav>
       </aside>
 
@@ -56,7 +61,7 @@ export default function Layout() {
               <span className="usuario-nombre">
                 {usuarioActual.nombre} {usuarioActual.apellido}
               </span>
-              <span className="usuario-rol">{usuarioActual.rol}</span>
+              <span className="usuario-rol">{nombresRol[usuarioActual.rol] ?? usuarioActual.rol}</span>
             </div>
             <button className="btn btn-secundario" onClick={salir}>
               <LogOut size={16} />

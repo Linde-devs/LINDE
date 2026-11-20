@@ -3,27 +3,29 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import logo from '../assets/logo.png'
 import AuthLayout from '../components/AuthLayout.jsx'
+import ListaMunicipios from '../components/ListaMunicipios.jsx'
+import { validarProductor } from '../data/validaciones.js'
 
-const vacio = { nombre: '', apellido: '', ci: '', correo: '', contrasena: '', confirmar: '' }
-
-function validar(d) {
-  const errores = {}
-  if (!d.nombre.trim()) errores.nombre = 'Ingresa tu nombre.'
-  if (!d.apellido.trim()) errores.apellido = 'Ingresa tu apellido.'
-  if (!d.ci.trim()) errores.ci = 'Ingresa tu CI.'
-  else if (!/^\d{5,10}$/.test(d.ci.trim())) errores.ci = 'El CI debe tener entre 5 y 10 dígitos.'
-  if (!d.correo.trim()) errores.correo = 'Ingresa tu correo.'
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo.trim())) errores.correo = 'El correo no es válido.'
-  if (d.contrasena.length < 8) errores.contrasena = 'La contraseña debe tener al menos 8 caracteres.'
-  if (d.confirmar !== d.contrasena) errores.confirmar = 'Las contraseñas no coinciden.'
-  return errores
+const vacio = {
+  nombre: '',
+  apellido: '',
+  ci: '',
+  runpa: '',
+  telefono: '',
+  municipio: '',
+  correo: '',
+  contrasena: '',
+  confirmar: '',
 }
 
+// RF-01: el registro público es para productores. Los administradores los crea otro administrador.
+// El técnico verificador y el SENASAG no tienen cuenta: consultan el expediente por su código.
 export default function Registro() {
   const { registrar } = useAuth()
   const navigate = useNavigate()
   const [datos, setDatos] = useState(vacio)
   const [errores, setErrores] = useState({})
+  const [enviando, setEnviando] = useState(false)
 
   function cambiar(e) {
     const { name, value } = e.target
@@ -31,19 +33,23 @@ export default function Registro() {
     if (errores[name]) setErrores({ ...errores, [name]: undefined })
   }
 
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault()
-    const nuevos = validar(datos)
+    const nuevos = validarProductor(datos, { conCuenta: true })
     if (Object.keys(nuevos).length > 0) {
       setErrores(nuevos)
       return
     }
-    const resultado = registrar(datos)
+    setEnviando(true)
+    const resultado = await registrar(datos)
+    setEnviando(false)
     if (!resultado.ok) {
-      setErrores({ [resultado.campo]: resultado.mensaje })
+      // Si la API indica el campo, el error se muestra bajo ese campo; si no, arriba del formulario.
+      const campo = resultado.campo && resultado.campo in vacio ? resultado.campo : 'general'
+      setErrores({ [campo]: resultado.mensaje })
       return
     }
-    navigate('/login', { state: { registrado: true, correo: datos.correo.trim() } })
+    navigate('/login', { state: { registrado: true, codigo: resultado.codigo, correo: datos.correo.trim() } })
   }
 
   function campo(name, etiqueta, props = {}) {
@@ -66,21 +72,34 @@ export default function Registro() {
     <AuthLayout>
       <form className="auth-card auth-card-ancha" onSubmit={enviar} noValidate>
         <img src={logo} alt="LINDE" className="auth-logo" />
-        <h1>Registrar administrador</h1>
-        <p className="auth-sub">Crea la cuenta con acceso a todos los módulos</p>
+        <h1>Registro de productor</h1>
+        <p className="auth-sub">Crea tu cuenta para registrar tus predios y sus polígonos</p>
+
+        {errores.general && <div className="mensaje mensaje-error">{errores.general}</div>}
 
         <div className="fila">
-          {campo('nombre', 'Nombre', { placeholder: 'Juan', autoComplete: 'given-name' })}
-          {campo('apellido', 'Apellido', { placeholder: 'Pérez', autoComplete: 'family-name' })}
+          {campo('nombre', 'Nombres', { placeholder: 'Juan Carlos', autoComplete: 'given-name' })}
+          {campo('apellido', 'Apellidos', { placeholder: 'Pérez Rojas', autoComplete: 'family-name' })}
         </div>
-        {campo('ci', 'Carnet de identidad', { placeholder: '7845123', inputMode: 'numeric' })}
-        {campo('correo', 'Correo electrónico', { type: 'email', placeholder: 'admin@linde.bo', autoComplete: 'email' })}
+        <div className="fila">
+          {campo('ci', 'CI o NIT', { placeholder: '7845123', autoComplete: 'off' })}
+          {campo('runpa', 'Código RUNPA (opcional)', { placeholder: 'Si lo tienes', autoComplete: 'off' })}
+        </div>
+        <div className="fila">
+          {campo('telefono', 'Teléfono', { placeholder: '70012345', inputMode: 'tel', autoComplete: 'tel' })}
+          {campo('municipio', 'Municipio', { placeholder: 'San Julián', list: 'municipios', autoComplete: 'off' })}
+        </div>
+        {campo('correo', 'Correo electrónico', { type: 'email', placeholder: 'productor@correo.bo', autoComplete: 'email' })}
         <div className="fila">
           {campo('contrasena', 'Contraseña', { type: 'password', placeholder: 'Mínimo 8 caracteres', autoComplete: 'new-password' })}
           {campo('confirmar', 'Confirmar contraseña', { type: 'password', placeholder: 'Repite la contraseña', autoComplete: 'new-password' })}
         </div>
 
-        <button type="submit" className="btn btn-primario btn-bloque">Crear cuenta</button>
+        <button type="submit" className="btn btn-primario btn-bloque" disabled={enviando}>
+          {enviando ? 'Creando cuenta…' : 'Crear cuenta'}
+        </button>
+
+        <ListaMunicipios />
 
         <p className="auth-pie">
           ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>

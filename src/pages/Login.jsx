@@ -14,15 +14,20 @@ export default function Login() {
   const [contrasena, setContrasena] = useState('')
   const [verContrasena, setVerContrasena] = useState(false)
   const [error, setError] = useState('')
-  const aviso = location.state?.registrado ? 'Cuenta creada. Ya puedes iniciar sesión.' : ''
+  const [enviando, setEnviando] = useState(false)
+  const aviso = location.state?.registrado
+    ? `Cuenta creada${location.state.codigo ? ` con el código ${location.state.codigo}` : ''}. Ya puedes iniciar sesión.`
+    : ''
 
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault()
     if (!correo.trim() || !contrasena) {
       setError('Ingresa tu correo y tu contraseña.')
       return
     }
-    const resultado = iniciarSesion(correo, contrasena)
+    setEnviando(true)
+    const resultado = await iniciarSesion(correo, contrasena)
+    setEnviando(false)
     if (!resultado.ok) {
       setError(resultado.mensaje)
       return
@@ -48,7 +53,7 @@ export default function Login() {
               type="email"
               value={correo}
               onChange={(e) => { setCorreo(e.target.value); setError('') }}
-              placeholder="admin@linde.bo"
+              placeholder="tu@correo.bo"
               autoComplete="email"
             />
           </div>
@@ -76,10 +81,15 @@ export default function Login() {
           </div>
         </label>
 
-        <button type="submit" className="btn btn-primario btn-bloque">Ingresar</button>
+        <button type="submit" className="btn btn-primario btn-bloque" disabled={enviando}>
+          {enviando ? 'Ingresando…' : 'Ingresar'}
+        </button>
 
         <p className="auth-pie">
-          ¿No tienes cuenta? <Link to="/registro">Registrar administrador</Link>
+          ¿Eres productor y no tienes cuenta? <Link to="/registro">Regístrate</Link>
+        </p>
+        <p className="auth-pie">
+          ¿Te mostraron un expediente? <Link to="/consulta">Consúltalo por su código</Link>
         </p>
       </form>
     </AuthLayout>
