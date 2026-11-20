@@ -381,3 +381,9 @@ a.btn { text-decoration: none; }
 .formulario-seccion { font-size: 15px; margin: 8px 0 10px; padding-top: 12px; border-top: 1px solid var(--color-borde); }
 .enlace-chico { font-size: 13px; white-space: nowrap; }
 
+
+/* Foco visible al navegar con el teclado (Tab) */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid var(--color-info);
+  outline-offset: 2px;
+}

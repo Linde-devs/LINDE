@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Pencil, Plus, ShieldPlus, Trash2, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import { validarProductor } from '../data/validaciones.js'
 import Encabezado from '../components/Encabezado.jsx'
 import Campo from '../components/Campo.jsx'
 import ListaMunicipios from '../components/ListaMunicipios.jsx'
+import NuevoAdministrador from '../components/NuevoAdministrador.jsx'
 
 const vacio = { nombre: '', apellido: '', ci: '', runpa: '', telefono: '', municipio: '', correo: '', contrasena: '' }
 
@@ -23,6 +24,7 @@ export default function Productores({ cu }) {
   const [datos, setDatos] = useState(vacio)
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
+  const [nuevoAdmin, setNuevoAdmin] = useState(false)
 
   const cargar = useCallback(async () => {
     try {
@@ -103,16 +105,32 @@ export default function Productores({ cu }) {
   return (
     <>
       <Encabezado titulo={cu.nombre} descripcion={cu.descripcion}>
-        {esAdmin && !formulario && (
-          <button className="btn btn-primario" onClick={() => abrir()}>
-            <Plus size={16} />
-            Nuevo productor
-          </button>
+        {esAdmin && !formulario && !nuevoAdmin && (
+          <div className="acciones">
+            <button className="btn btn-secundario" onClick={() => { setAviso(''); setNuevoAdmin(true) }}>
+              <ShieldPlus size={16} />
+              Nuevo administrador
+            </button>
+            <button className="btn btn-primario" onClick={() => abrir()}>
+              <Plus size={16} />
+              Nuevo productor
+            </button>
+          </div>
         )}
       </Encabezado>
 
       {aviso && <div className="mensaje mensaje-exito">{aviso}</div>}
       {error && <div className="mensaje mensaje-error">{error}</div>}
+
+      {nuevoAdmin && (
+        <NuevoAdministrador
+          onCerrar={() => setNuevoAdmin(false)}
+          onCreado={(admin) => {
+            setNuevoAdmin(false)
+            setAviso(`Administrador ${admin.nombre} ${admin.apellido} creado. Ya puede iniciar sesión con ${admin.correo}.`)
+          }}
+        />
+      )}
 
       {formulario && (
         <form className="panel" onSubmit={guardar} noValidate>
