@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, History, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, History, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN, PRODUCTOR, descripcionesRol } from '../data/casosUso.js'
 import IlustracionPredios from '../components/IlustracionPredios.jsx'
@@ -59,6 +59,24 @@ export default function Principal() {
 
   const tieneHistorial = historial.length > 0
 
+  // La descripción de LINDE se puede ocultar; la preferencia se guarda en el navegador.
+  const [verIntro, setVerIntro] = useState(() => {
+    try {
+      return localStorage.getItem('linde.verIntro') !== 'no'
+    } catch {
+      return true
+    }
+  })
+  function alternarIntro() {
+    const nuevo = !verIntro
+    setVerIntro(nuevo)
+    try {
+      localStorage.setItem('linde.verIntro', nuevo ? 'si' : 'no')
+    } catch {
+      // Sin almacenamiento disponible: la preferencia dura hasta recargar.
+    }
+  }
+
   return (
     <>
       <div className="pagina-encabezado">
@@ -67,8 +85,15 @@ export default function Principal() {
       </div>
 
       <div className="contenedor">
-        <section className="intro">
-          <h2 className="intro-titulo">¿En qué consiste LINDE?</h2>
+        <section className="intro" style={verIntro ? undefined : { minHeight: 0, padding: '20px 40px' }}>
+          <h2 className="intro-titulo" style={verIntro ? undefined : { marginBottom: 12 }}>¿En qué consiste LINDE?</h2>
+          <div style={{ textAlign: 'center', marginBottom: verIntro ? 24 : 0 }}>
+            <button type="button" className="btn btn-secundario" onClick={alternarIntro}>
+              {verIntro ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              {verIntro ? 'Ocultar descripción' : 'Mostrar descripción'}
+            </button>
+          </div>
+          {verIntro && (
           <div className="intro-cuerpo">
             <div className="intro-texto">
               <p>
@@ -96,6 +121,7 @@ export default function Principal() {
             </div>
             <IlustracionPredios />
           </div>
+          )}
         </section>
 
         {registraPredios && (
