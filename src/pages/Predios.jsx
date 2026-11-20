@@ -222,7 +222,7 @@ export default function Predios({ cu }) {
           <h3 className="formulario-seccion">Título de propiedad (INRA)</h3>
           <div className="fila">
             <Campo name="numeroTituloInra" etiqueta="N.º de título" valor={datos.numeroTituloInra}
-              error={errores.numeroTituloInra} onChange={cambiar} placeholder="TIT-001" />
+              error={errores.numeroTituloInra} onChange={cambiar} placeholder="SPP-NAL-070167" />
             <Campo name="titularCi" etiqueta="CI del titular" valor={datos.titularCi} error={errores.titularCi}
               onChange={cambiar} inputMode="numeric" placeholder="7845123" />
             <Campo name="superficieTituladaHa" etiqueta="Superficie titulada (ha)" valor={datos.superficieTituladaHa}

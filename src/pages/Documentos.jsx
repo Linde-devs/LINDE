@@ -194,7 +194,7 @@ export default function Documentos({ cu }) {
               ))}
             </Campo>
             <Campo name="numero" etiqueta="Número del documento" valor={formulario.numero} error={errores.numero}
-              onChange={cambiar} placeholder={formulario.tipo === 'TituloPropiedad' ? 'TIT-001' : 'POP-009'} />
+              onChange={cambiar} placeholder={formulario.tipo === 'TituloPropiedad' ? 'SPP-NAL-070167' : 'POP-009'} />
           </div>
           <div className="fila">
             {formulario.tipo === 'TituloPropiedad' && (
