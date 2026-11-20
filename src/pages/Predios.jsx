@@ -28,6 +28,7 @@ const cultivos = ['Soya', 'Maíz', 'Girasol', 'Sorgo', 'Trigo', 'Arroz', 'Caña 
 // Se puede editar o eliminar mientras el predio no está en revisión ni aprobado (patrón State en la API).
 // Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
 const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
+const sinTildes = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 function textoPoligono(p) {
   if (!p.tienePoligono) return 'Sin registrar'
@@ -51,6 +52,8 @@ export default function Predios({ cu }) {
   const [datos, setDatos] = useState(vacio)
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
 
   const cargar = useCallback(async () => {
     try {
@@ -159,6 +162,15 @@ export default function Predios({ cu }) {
   }
 
   const nuevo = formulario?.id === null
+
+  // Búsqueda sin distinguir mayúsculas ni tildes, y filtro por estado.
+  const texto = sinTildes(busqueda.trim())
+  const visibles = lista.filter((p) => {
+    if (filtroEstado && p.estado !== filtroEstado) return false
+    if (!texto) return true
+    const campos = [p.nombre, p.municipio, p.departamento, p.cultivo, p.productor, p.numeroTituloInra]
+    return campos.some((c) => sinTildes(c).includes(texto))
+  })
   const superficie = numero(datos.superficieDeclaradaHa)
 
   return (
@@ -256,10 +268,27 @@ export default function Predios({ cu }) {
       )}
 
       <div className="panel">
+        {!cargando && lista.length > 0 && (
+          <>
+            <div className="fila">
+              <Campo name="busqueda" etiqueta="Buscar" valor={busqueda} onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Nombre, municipio, departamento, cultivo o título" autoComplete="off" />
+              <Campo name="filtroEstado" etiqueta="Estado" valor={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
+                <option value="">Todos</option>
+                <option value="Registrado">Registrado</option>
+                <option value="ConAlertas">Con alertas</option>
+                <option value="Aprobado">Aprobado</option>
+              </Campo>
+            </div>
+            <p className="nota">Mostrando {visibles.length} de {lista.length} predios.</p>
+          </>
+        )}
         {cargando ? (
           <p className="panel-vacio">Cargando…</p>
         ) : lista.length === 0 ? (
           <p className="panel-vacio">Aún no hay predios registrados.</p>
+        ) : visibles.length === 0 ? (
+          <p className="panel-vacio">Ningún predio coincide con la búsqueda.</p>
         ) : (
           <div className="tabla-contenedor">
             <table className="tabla">
@@ -277,7 +306,7 @@ export default function Predios({ cu }) {
                 </tr>
               </thead>
               <tbody>
-                {lista.map((p) => (
+                {visibles.map((p) => (
                   <tr key={p.id}>
                     <td>{p.nombre}</td>
                     {esAdmin && <td>{p.productor}</td>}

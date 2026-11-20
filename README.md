@@ -24,13 +24,15 @@ Luego abre http://localhost:5173 en el navegador.
   - Para el productor y el administrador: historial de predios con su estado y botón **Empezar** (o **Nuevo predio**), que abre el registro de predio.
 - **Menú lateral por rol** (RF-11): cada usuario ve solo los casos de uso de su rol; el administrador ve todos. Si alguien escribe la dirección de una opción que no le corresponde, ve "Acceso denegado".
 - **Gestionar productores** (CU-02): solo el administrador; registra, edita y elimina.
-- **Gestionar predios** (CU-03): listado y formulario con nombre, municipio, cultivo, superficie (2 decimales), título INRA y desmonte.
+- **Gestionar predios** (CU-03): listado y formulario con nombre, departamento, municipio (solo los del departamento elegido), cultivo, superficie (2 decimales), desmonte y, de forma opcional, el título del INRA (número, CI del titular y superficie titulada).
 - **Gestionar polígonos** (CU-04): el polígono o el punto sobre el mapa de OpenStreetMap (Leaflet; el dibujo con clics llega con el RF-04), carga de archivos GeoJSON o KML y registro de un punto con 6 decimales. Si el archivo no es válido, se muestra el tipo de error.
-- **Enviar predio a revisión** (CU-06): ejecuta las cuatro validaciones y muestra el resultado de cada capa. Si hay alertas el predio queda "Con alertas" y se puede corregir y reenviar; si las cuatro capas están conformes queda "Aprobado".
+- **Gestionar documentos** (CU-05): registra el título del INRA (si no se cargó con el predio), el POP y el Plan de desmonte de la ABT.
+- **Validar predio** (CU-07): muestra la lista de requisitos para enviar el predio (datos, ubicación, título y autorizaciones de la ABT), con un enlace para completar cada uno que falte.
+- **Enviar predio a revisión** (CU-06): solo se habilita si la lista de requisitos está completa; ejecuta las cuatro validaciones y muestra el resultado de cada capa. Si hay alertas el predio queda "Con alertas" y se puede corregir y reenviar; si las cuatro capas están conformes queda "Aprobado".
 - **Gestionar alertas** (CU-08): alertas pendientes de los predios del usuario, de mayor a menor prioridad.
 - **Vista para revisión** (CU-09): en una sola pantalla, lo que vería un técnico verificador: alertas, mapa, datos declarados, documentos, resultado de cada capa y margen de error. Se puede imprimir.
 - **Gestionar expedientes** (CU-10): genera el expediente del predio aprobado o con alertas, lo muestra, lo imprime o lo guarda como PDF (con el diálogo de impresión del navegador) y da el enlace a la consulta pública.
-- Los demás casos de uso abren una pantalla "en construcción".
+- **Gestionar capas de referencia** (CU-11) y **Gestionar parámetros** (CU-12) todavía abren una pantalla "en construcción".
 
 ## Conexión con la API
 
@@ -78,6 +80,12 @@ src/
     Predios.jsx                    CU-03
     Poligonos.jsx                  CU-04
     Envio.jsx                      CU-06
+    Documentos.jsx                 CU-05
+    Validacion.jsx                 CU-07
+    Alertas.jsx                    CU-08
+    Revision.jsx                   CU-09
+    Expedientes.jsx                CU-10
+    Consulta.jsx                   consulta pública del expediente
     Modulo.jsx                     pantalla genérica de los módulos pendientes
   styles/theme.css                 paleta Satelital y estilos
 ```
