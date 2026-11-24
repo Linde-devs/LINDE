@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { History, Save } from 'lucide-react'
+import { History, Satellite, Save } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import Campo from '../components/Campo.jsx'
 import Encabezado from '../components/Encabezado.jsx'
@@ -36,6 +36,8 @@ export default function Parametros({ cu }) {
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [cambios, setCambios] = useState([])
+  const [prueba, setPrueba] = useState(null)
+  const [probando, setProbando] = useState(false)
 
   const cargarCambios = useCallback(
     () => api('/bitacora?entidad=Parametros').then((r) => setCambios(r.slice(-5).reverse())).catch(() => setCambios([])),
@@ -89,6 +91,19 @@ export default function Parametros({ cu }) {
     }
   }
 
+  // Comprueba la conexión con Earth Engine con un polígono de prueba (la llave se configura en el servidor).
+  async function probarEarthEngine() {
+    setProbando(true)
+    setPrueba(null)
+    try {
+      setPrueba(await api('/cobertura/prueba'))
+    } catch (err) {
+      setPrueba({ conectado: false, error: err.message })
+    } finally {
+      setProbando(false)
+    }
+  }
+
   if (!datos) return error ? <div className="mensaje mensaje-error">{error}</div> : <p className="panel-vacio">Cargando…</p>
 
   return (
@@ -127,6 +142,27 @@ export default function Parametros({ cu }) {
           </button>
         </div>
       </form>
+
+      <div className="panel">
+        <div className="panel-cabecera">
+          <h2 className="panel-titulo"><Satellite size={18} />Análisis satelital (Google Earth Engine)</h2>
+          <button type="button" className="btn btn-secundario" onClick={probarEarthEngine} disabled={probando}>
+            {probando ? 'Consultando…' : 'Probar conexión'}
+          </button>
+        </div>
+        <p className="panel-texto">
+          Compara el mapa de bosque del JRC al 31/12/2020 con la cobertura de árboles de Dynamic World de los últimos 180
+          días. La llave de la cuenta de servicio se configura en el servidor, nunca en esta pantalla.
+        </p>
+        {prueba?.conectado && (
+          <div className="mensaje mensaje-exito">
+            Conectado. Polígono de prueba cerca de San Julián: {prueba.bosquePorcentajeCorte.toFixed(1)} % de bosque en 2020 y{' '}
+            {prueba.bosquePorcentajeActual.toFixed(1)} % de árboles ahora (imagen del{' '}
+            {prueba.fechaImagenActual.split('-').reverse().join('/')}).
+          </div>
+        )}
+        {prueba && !prueba.conectado && <div className="mensaje mensaje-error">{prueba.error}</div>}
+      </div>
 
       <div className="panel">
         <h2 className="panel-titulo"><History size={18} />Últimos cambios</h2>
