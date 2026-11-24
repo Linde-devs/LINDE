@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FileUp, MapPin, ShieldCheck } from 'lucide-react'
+import { Crosshair, FileUp, MapPin, PenLine, ShieldCheck, Trash2, Undo2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import { validarPunto } from '../data/validaciones.js'
+import { areaHa, problemaContorno, ubicacionActual } from '../data/geometria.js'
 import Encabezado from '../components/Encabezado.jsx'
 import Campo from '../components/Campo.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
 import MapaPredio from '../components/MapaPredio.jsx'
+import MapaDibujo from '../components/MapaDibujo.jsx'
 
 // Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
 const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
@@ -32,7 +34,9 @@ function centroide(vertices) {
 
 const seis = (n) => n.toFixed(6)
 
-// CU-04. RF-03: carga del polígono desde un archivo GeoJSON o KML. RF-05: un punto basta hasta 4 ha.
+// CU-04. RF-03: carga del polígono desde un archivo GeoJSON o KML. RF-04: dibujo sobre el mapa, con vértices marcados
+// con clics o tomados del GPS del dispositivo recorriendo el lindero. RF-05: un punto basta hasta 4 ha.
+// Cada geometría guardada crea una versión nueva y conserva las anteriores (Prototype, en la API).
 // La API rechaza la geometría inválida en el momento de cargarla e indica el tipo de error.
 // La superposición con otros predios (RF-06) se revisa al enviar el predio a revisión.
 export default function Poligonos({ cu }) {
@@ -48,8 +52,12 @@ export default function Poligonos({ cu }) {
   const [punto, setPunto] = useState({ lat: '', lon: '' })
   const [erroresPunto, setErroresPunto] = useState({})
   const [enviando, setEnviando] = useState(false)
-  // Solo en predios de 4 ha o menos: el usuario elige entre cargar el polígono o registrar un punto.
+  // Forma de registrar la geometría: archivo, dibujo en el mapa o un punto (este último solo hasta 4 ha).
   const [modo, setModo] = useState('poligono')
+  const [trazo, setTrazo] = useState([])
+  const [motivo, setMotivo] = useState('')
+  const [gps, setGps] = useState(null)
+  const [buscandoGps, setBuscandoGps] = useState(false)
 
   const seleccionado = Number(parametros.get('predio')) || predios[0]?.id
   const predio = predios.find((p) => p.id === seleccionado)
@@ -88,6 +96,53 @@ export default function Poligonos({ cu }) {
     setErroresPunto({})
     setPunto({ lat: '', lon: '' })
     setModo('poligono')
+    setTrazo([])
+    setMotivo('')
+    setGps(null)
+  }
+
+  // RF-04. Ubicación del GPS: en el dibujo agrega un vértice; en el modo punto llena la latitud y la longitud.
+  async function usarGps(destino) {
+    setError('')
+    setBuscandoGps(true)
+    try {
+      const u = await ubicacionActual()
+      const v = { lat: Number(u.lat.toFixed(6)), lon: Number(u.lon.toFixed(6)) }
+      setGps(u.precisionM)
+      if (destino === 'punto') {
+        setPunto({ lat: String(v.lat), lon: String(v.lon) })
+        setErroresPunto({})
+      } else setTrazo((t) => [...t, v])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBuscandoGps(false)
+    }
+  }
+
+  async function guardarDibujo(e) {
+    e.preventDefault()
+    setError('')
+    setAviso('')
+    const problema = problemaContorno(trazo)
+    if (problema) {
+      setError(problema)
+      return
+    }
+    setEnviando(true)
+    try {
+      const guardado = await api(`/predios/${seleccionado}/poligono`, {
+        metodo: 'PUT',
+        cuerpo: { vertices: [...trazo, trazo[0]], motivo: motivo.trim() || 'Dibujado en el mapa' },
+      })
+      await despues(guardado, 'dibujo en el mapa')
+      setTrazo([])
+      setMotivo('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setEnviando(false)
+    }
   }
 
   async function despues(guardado, origen) {
@@ -164,8 +219,14 @@ export default function Poligonos({ cu }) {
   const requierePoligono = predio && predio.superficieDeclaradaHa > 4
   const sePuedeEditar = predio && editable(predio)
   const centro = poligono ? centroide(poligono.vertices) : null
-  // RF-05: con más de 4 ha el punto nunca se acepta, así que solo se ofrece cargar el polígono.
-  const formulario = requierePoligono ? 'poligono' : modo
+  // RF-05: con más de 4 ha el punto nunca se acepta, así que no se ofrece.
+  const formulario = requierePoligono && modo === 'punto' ? 'poligono' : modo
+  const modos = [
+    { valor: 'poligono', texto: 'Archivo', icono: FileUp },
+    { valor: 'dibujo', texto: 'Dibujar en el mapa', icono: PenLine },
+    ...(requierePoligono ? [] : [{ valor: 'punto', texto: 'Un punto', icono: MapPin }]),
+  ]
+  const problemaTrazo = trazo.length > 0 ? problemaContorno(trazo) : null
 
   return (
     <>
@@ -229,27 +290,23 @@ export default function Poligonos({ cu }) {
 
           <section className="panel">
             {requierePoligono ? (
-              <p className="nota sin-margen">
+              <p className="panel-texto">
                 Este predio declara {predio.superficieDeclaradaHa.toLocaleString('es-BO')} ha. Con más de 4 ha se exige el
-                polígono completo del predio: carga el archivo con su contorno.
+                polígono completo: cárgalo desde un archivo o dibújalo en el mapa.
               </p>
             ) : (
-              <>
-                <p className="panel-texto">
-                  Este predio declara 4 ha o menos. Puedes registrar su ubicación de una de estas dos formas:
-                </p>
-                <div className="selector-modo" role="tablist">
-                  <button type="button" role="tab" aria-selected={modo === 'poligono'}
-                    className={modo === 'poligono' ? 'activo' : ''} onClick={() => setModo('poligono')}>
-                    <FileUp size={16} />Polígono (archivo)
-                  </button>
-                  <button type="button" role="tab" aria-selected={modo === 'punto'}
-                    className={modo === 'punto' ? 'activo' : ''} onClick={() => setModo('punto')}>
-                    <MapPin size={16} />Un punto
-                  </button>
-                </div>
-              </>
+              <p className="panel-texto">
+                Este predio declara 4 ha o menos: puedes registrar su polígono o solo un punto dentro del predio.
+              </p>
             )}
+            <div className="selector-modo" role="tablist">
+              {modos.map(({ valor, texto, icono: Icono }) => (
+                <button key={valor} type="button" role="tab" aria-selected={formulario === valor}
+                  className={formulario === valor ? 'activo' : ''} onClick={() => { setModo(valor); setError('') }}>
+                  <Icono size={16} />{texto}
+                </button>
+              ))}
+            </div>
 
             {formulario === 'poligono' ? (
               <form onSubmit={subirArchivo}>
@@ -264,6 +321,49 @@ export default function Poligonos({ cu }) {
                   {enviando ? 'Cargando…' : poligono && !poligono.esPunto ? 'Reemplazar polígono' : 'Cargar polígono'}
                 </button>
               </form>
+            ) : formulario === 'dibujo' ? (
+              <form onSubmit={guardarDibujo} noValidate>
+                <h2 className="panel-titulo"><PenLine size={18} />Dibujar el polígono</h2>
+                <p className="panel-texto">
+                  Haz clic en el mapa en cada esquina del predio, en orden. Arrastra un vértice para corregirlo. En el campo,
+                  camina el lindero y pulsa «Agregar mi ubicación» en cada esquina para tomarla del GPS.
+                </p>
+                <MapaDibujo vertices={trazo} onChange={setTrazo} habilitado={sePuedeEditar}
+                  referencia={poligono && !poligono.esPunto ? poligono.vertices : null} />
+                <div className="barra-dibujo">
+                  <button type="button" className="btn btn-secundario" onClick={() => usarGps('dibujo')}
+                    disabled={!sePuedeEditar || buscandoGps}>
+                    <Crosshair size={16} />{buscandoGps ? 'Buscando…' : 'Agregar mi ubicación'}
+                  </button>
+                  <button type="button" className="btn btn-secundario" onClick={() => setTrazo(trazo.slice(0, -1))}
+                    disabled={trazo.length === 0}>
+                    <Undo2 size={16} />Deshacer
+                  </button>
+                  <button type="button" className="btn btn-secundario" onClick={() => setTrazo([])} disabled={trazo.length === 0}>
+                    <Trash2 size={16} />Borrar
+                  </button>
+                  {poligono && !poligono.esPunto && (
+                    <button type="button" className="btn btn-secundario" disabled={!sePuedeEditar}
+                      onClick={() => setTrazo(poligono.vertices.slice(0, -1))}>
+                      Partir del polígono vigente
+                    </button>
+                  )}
+                </div>
+                <p className="nota">
+                  {trazo.length} {trazo.length === 1 ? 'vértice' : 'vértices'}
+                  {trazo.length >= 3 && !problemaTrazo ? ` · ${areaHa(trazo).toLocaleString('es-BO', { maximumFractionDigits: 2 })} ha aproximadas` : ''}
+                  {gps != null ? ` · última ubicación del GPS con precisión de ${Math.round(gps)} m` : ''}
+                </p>
+                {problemaTrazo && trazo.length >= 3 && <p className="error-campo">{problemaTrazo}</p>}
+                {poligono && (
+                  <Campo name="motivo" etiqueta="Motivo del cambio (opcional)" valor={motivo}
+                    onChange={(e) => setMotivo(e.target.value)} placeholder="Corrección del lindero norte" maxLength={200}
+                    disabled={!sePuedeEditar} />
+                )}
+                <button type="submit" className="btn btn-primario" disabled={enviando || !sePuedeEditar || trazo.length < 3}>
+                  {enviando ? 'Guardando…' : poligono ? 'Guardar como versión nueva' : 'Guardar polígono'}
+                </button>
+              </form>
             ) : (
               <form onSubmit={guardarPunto} noValidate>
                 <h2 className="panel-titulo"><MapPin size={18} />Registrar un punto</h2>
@@ -274,7 +374,14 @@ export default function Poligonos({ cu }) {
                   <Campo name="lon" etiqueta="Longitud" valor={punto.lon} error={erroresPunto.lon} placeholder="Ej.: -63.123456"
                     onChange={(e) => setPunto({ ...punto, lon: e.target.value })} inputMode="decimal" disabled={!sePuedeEditar} />
                 </div>
-                <button type="submit" className="btn btn-primario" disabled={enviando || !sePuedeEditar}>Guardar punto</button>
+                <div className="barra-dibujo">
+                  <button type="button" className="btn btn-secundario" onClick={() => usarGps('punto')}
+                    disabled={!sePuedeEditar || buscandoGps}>
+                    <Crosshair size={16} />{buscandoGps ? 'Buscando…' : 'Usar mi ubicación'}
+                  </button>
+                  <button type="submit" className="btn btn-primario" disabled={enviando || !sePuedeEditar}>Guardar punto</button>
+                </div>
+                {gps != null && <p className="nota">Ubicación del GPS con precisión de {Math.round(gps)} m.</p>}
               </form>
             )}
           </section>
