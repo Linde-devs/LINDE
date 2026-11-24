@@ -396,3 +396,11 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .boton-enlace:hover { text-decoration: underline; }
 .boton-enlace:disabled { opacity: 0.6; cursor: default; }
 .texto-aviso { color: #8A5A00; font-size: 13px; margin-right: 10px; }
+
+/* CU-12: casilla de verificación con su texto */
+.casilla { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 6px 0 14px; cursor: pointer; }
+.casilla input { width: 16px; height: 16px; }
+.parametros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 20px; margin-bottom: 8px; }
+.parametros .campo { margin-bottom: 4px; }
+.parametros .ayuda { display: block; color: var(--color-texto-2); font-size: 12px; margin-bottom: 14px; }
+@media (max-width: 800px) { .parametros { grid-template-columns: 1fr; } }
