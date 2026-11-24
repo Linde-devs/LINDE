@@ -9,6 +9,8 @@ const textos = {
   Alta: 'Prioridad alta',
   Media: 'Prioridad media',
   Baja: 'Prioridad baja',
+  ConObservaciones: 'Con observaciones',
+  NoConforme: 'No conforme',
 }
 
 const clases = {
@@ -21,6 +23,8 @@ const clases = {
   Alta: 'error',
   Media: 'aviso',
   Baja: 'info',
+  ConObservaciones: 'aviso',
+  NoConforme: 'error',
 }
 
 export default function Etiqueta({ valor }) {

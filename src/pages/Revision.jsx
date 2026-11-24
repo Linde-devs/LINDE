@@ -9,6 +9,7 @@ import MapaPredio from '../components/MapaPredio.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
 import { nombresCapa } from '../components/VistaExpediente.jsx'
 import BotonArchivo from '../components/BotonArchivo.jsx'
+import Inspecciones from '../components/Inspecciones.jsx'
 
 const nombresDocumento = {
   TituloPropiedad: 'Título de propiedad (INRA)',
@@ -21,6 +22,7 @@ const ha = (n) => `${Number(n).toLocaleString('es-BO', { maximumFractionDigits: 
 // CU-09. Vista para revisión: muestra al productor lo mismo que revisaría un técnico verificador
 // (alertas por prioridad, mapa, documentos, resultado de cada capa y margen de error), en una sola pantalla.
 // El técnico no tiene cuenta en LINDE: el productor le muestra esta vista o el expediente.
+// RF-14: aquí también se registran las inspecciones de campo que hizo el técnico.
 export default function Revision({ cu }) {
   const { api, usuarioActual } = useAuth()
   const [parametros, setParametros] = useSearchParams()
@@ -213,6 +215,8 @@ export default function Revision({ cu }) {
               <p className="panel-texto">Todavía no hay validaciones para este predio.</p>
             )}
           </section>
+
+          <Inspecciones predioId={predio.id} />
         </div>
       )}
     </>

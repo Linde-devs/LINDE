@@ -1,5 +1,6 @@
 import Etiqueta from './Etiqueta.jsx'
 import MapaPredio from './MapaPredio.jsx'
+import { fechaCorta, resultadosInspeccion } from './Inspecciones.jsx'
 
 export const nombresCapa = {
   Geometrica: 'Geometría y superposición',
@@ -106,6 +107,20 @@ export default function VistaExpediente({ expediente: e }) {
           <p className="panel-texto">No se adjuntaron documentos.</p>
         )}
       </section>
+
+      {e.inspecciones?.length > 0 && (
+        <section>
+          <h3>Inspecciones de campo</h3>
+          <ul className="lista-simple">
+            {e.inspecciones.map((i, n) => (
+              <li key={n}>
+                {fechaCorta(i.fecha)} · {i.tecnico} · {resultadosInspeccion[i.resultado] ?? i.resultado}
+                {i.comentario ? `: ${i.comentario}` : ''}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <p className="expediente-leyenda">
         {LEYENDA} Cualquiera puede comprobar este expediente en la consulta pública de LINDE con el código {e.codigo}.
