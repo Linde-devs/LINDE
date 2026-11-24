@@ -13,6 +13,7 @@ import Validacion from './Validacion.jsx'
 import Alertas from './Alertas.jsx'
 import Revision from './Revision.jsx'
 import Expedientes from './Expedientes.jsx'
+import Capas from './Capas.jsx'
 
 // Pantallas ya implementadas. Las demás muestran "Módulo en construcción".
 const paginas = {
@@ -25,6 +26,7 @@ const paginas = {
   alertas: Alertas,
   revision: Revision,
   expedientes: Expedientes,
+  capas: Capas,
 }
 
 // RF-11: aunque alguien escriba la dirección a mano, solo entra si su rol tiene ese caso de uso.
