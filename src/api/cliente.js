@@ -12,7 +12,7 @@ export class ErrorApi extends Error {
   }
 }
 
-export async function solicitud(ruta, { metodo = 'GET', cuerpo, token } = {}) {
+export async function solicitud(ruta, { metodo = 'GET', cuerpo, token, comoArchivo = false } = {}) {
   // Un archivo (FormData) se envía tal cual: el navegador arma el multipart y su encabezado.
   const esArchivo = cuerpo instanceof FormData
   const encabezados = {}
@@ -29,6 +29,9 @@ export async function solicitud(ruta, { metodo = 'GET', cuerpo, token } = {}) {
   } catch {
     throw new ErrorApi('No se pudo conectar con el servidor. Verifica que la API esté en ejecución.', 0)
   }
+
+  // RF-16: los archivos de los documentos llegan como binario (PDF o imagen), no como JSON.
+  if (comoArchivo && respuesta.ok) return respuesta.blob()
 
   const texto = await respuesta.text()
   let datos = null

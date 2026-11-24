@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Plus, Trash2, Upload, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import Campo from '../components/Campo.jsx'
 import Encabezado from '../components/Encabezado.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
+import BotonArchivo from '../components/BotonArchivo.jsx'
 import { numero } from '../data/validaciones.js'
 
 export const tiposDocumento = {
@@ -21,7 +22,18 @@ const ha = (n) => `${Number(n).toLocaleString('es-BO', { maximumFractionDigits: 
 // CU-05. Gestionar documentos: el productor registra los datos del título del INRA y de las autorizaciones de la ABT.
 // La capa de titularidad compara el CI del titular con el del productor y la superficie titulada con el área del polígono;
 // la capa de uso de suelo busca el POP o el plan de desmonte cuando el predio no entra en la Ley 741.
-// Por ahora se registran los datos del documento; la subida del archivo PDF o imagen (RF-16) queda pendiente.
+// RF-16: cada documento lleva además su archivo (PDF, JPG o PNG, hasta 10 MB), que es requisito para enviar el predio.
+
+const TIPOS_ARCHIVO = '.pdf,.jpg,.jpeg,.png'
+const MAXIMO_BYTES = 10 * 1024 * 1024
+
+// Revisión rápida en el navegador; la API vuelve a revisar el tipo (por su contenido) y el tamaño.
+export function errorArchivo(archivo) {
+  if (!archivo) return null
+  if (!/\.(pdf|jpe?g|png)$/i.test(archivo.name)) return 'Solo se aceptan archivos PDF, JPG o PNG.'
+  if (archivo.size > MAXIMO_BYTES) return 'El archivo supera los 10 MB.'
+  return null
+}
 export default function Documentos({ cu }) {
   const { api, usuarioActual } = useAuth()
   const [parametros, setParametros] = useSearchParams()
@@ -35,6 +47,8 @@ export default function Documentos({ cu }) {
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [archivoNuevo, setArchivoNuevo] = useState(null)
+  const [subiendo, setSubiendo] = useState(null)
 
   const seleccionado = Number(parametros.get('predio')) || predios[0]?.id
   const predio = predios.find((p) => p.id === seleccionado)
@@ -107,6 +121,8 @@ export default function Documentos({ cu }) {
       e.titularCi = 'Escribe el CI del titular que figura en el título (5 a 10 dígitos).'
     const sup = numero(f.superficieHa)
     if (!(sup > 0)) e.superficieHa = 'Escribe la superficie en hectáreas, mayor a cero.'
+    const problema = errorArchivo(archivoNuevo)
+    if (problema) e.archivo = problema
     return e
   }
 
@@ -118,7 +134,7 @@ export default function Documentos({ cu }) {
 
     setGuardando(true)
     try {
-      await api(`/predios/${seleccionado}/documentos`, {
+      const creado = await api(`/predios/${seleccionado}/documentos`, {
         metodo: 'POST',
         cuerpo: {
           tipo: formulario.tipo,
@@ -127,7 +143,9 @@ export default function Documentos({ cu }) {
           superficieHa: numero(formulario.superficieHa),
         },
       })
-      setAviso(`${tiposDocumento[formulario.tipo]} registrado.`)
+      if (archivoNuevo) await subirArchivo(creado, archivoNuevo)
+      setAviso(`${tiposDocumento[formulario.tipo]} registrado${archivoNuevo ? ' con su archivo' : ''}.`)
+      setArchivoNuevo(null)
       setFormulario(null)
       await cargarDocumentos(seleccionado)
       if (formulario.tipo === 'TituloPropiedad') await recargarPredios()
@@ -135,6 +153,36 @@ export default function Documentos({ cu }) {
       setErrores({ general: err.message })
     } finally {
       setGuardando(false)
+    }
+  }
+
+  // RF-16. Sube o reemplaza el archivo de un documento ya registrado.
+  async function subirArchivo(doc, archivo) {
+    const cuerpo = new FormData()
+    cuerpo.append('archivo', archivo)
+    return api(`/documentos/${doc.id}/archivo`, { metodo: 'POST', cuerpo })
+  }
+
+  async function elegirArchivo(doc, e) {
+    const archivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!archivo) return
+    setAviso('')
+    setError('')
+    const problema = errorArchivo(archivo)
+    if (problema) {
+      setError(problema)
+      return
+    }
+    setSubiendo(doc.id)
+    try {
+      await subirArchivo(doc, archivo)
+      setAviso(`Archivo de ${tiposDocumento[doc.tipo]} ${doc.archivoClave ? 'reemplazado' : 'subido'}.`)
+      await cargarDocumentos(seleccionado)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubiendo(null)
     }
   }
 
@@ -225,6 +273,12 @@ export default function Documentos({ cu }) {
               etiqueta={formulario.tipo === 'TituloPropiedad' ? 'Superficie titulada (ha)' : 'Superficie autorizada (ha)'}
               valor={formulario.superficieHa} error={errores.superficieHa} onChange={cambiar} inputMode="decimal" placeholder="120.50" />
           </div>
+          <label className="campo">
+            <span>Archivo del documento (PDF, JPG o PNG, hasta 10 MB)</span>
+            <input type="file" accept={TIPOS_ARCHIVO} className="archivo"
+              onChange={(e) => { setArchivoNuevo(e.target.files?.[0] ?? null); setErrores({ ...errores, archivo: undefined }) }} />
+            {errores.archivo && <small className="error-campo">{errores.archivo}</small>}
+          </label>
           {formulario.tipo === 'TituloPropiedad' && (
             <p className="nota">
               La validación compara el CI del titular con el del productor y la superficie titulada con el área del polígono
@@ -260,6 +314,7 @@ export default function Documentos({ cu }) {
                   <th>CI del titular</th>
                   <th className="numero">Superficie</th>
                   <th>Registrado</th>
+                  <th>Archivo</th>
                   <th />
                 </tr>
               </thead>
@@ -271,6 +326,17 @@ export default function Documentos({ cu }) {
                     <td>{d.titularCi ?? '-'}</td>
                     <td className="numero">{d.superficieHa != null ? ha(d.superficieHa) : '-'}</td>
                     <td>{new Date(d.fechaRegistro).toLocaleDateString('es-BO')}</td>
+                    <td>
+                      {d.archivoClave ? <BotonArchivo documento={d} texto="Ver" /> : <span className="texto-aviso">Falta</span>}
+                      {puedeEditar && (
+                        <label className="enlace-chico boton-enlace" title="PDF, JPG o PNG, hasta 10 MB">
+                          <Upload size={14} />
+                          {subiendo === d.id ? 'Subiendo…' : d.archivoClave ? 'Reemplazar' : 'Subir'}
+                          <input type="file" accept={TIPOS_ARCHIVO} hidden disabled={subiendo !== null}
+                            onChange={(e) => elegirArchivo(d, e)} />
+                        </label>
+                      )}
+                    </td>
                     <td className="acciones-fila">
                       {d.tipo === 'TituloPropiedad' ? (
                         <Link to="/app/predios" state={{ editar: predio.id }} className="enlace-chico">Editar en el predio</Link>
@@ -287,6 +353,12 @@ export default function Documentos({ cu }) {
           </div>
         )}
 
+        {documentos.some((d) => !d.archivoClave) && (
+          <p className="nota">
+            Sube el archivo escaneado de cada documento (columna Archivo): sin él, el documento no cuenta como requisito para
+            enviar el predio a revisión.
+          </p>
+        )}
         {!tieneTitulo && (
           <p className="nota">
             Falta el título de propiedad del INRA. Agrégalo con el botón Agregar documento o con los datos del predio:{' '}
@@ -301,7 +373,7 @@ export default function Documentos({ cu }) {
         )}
         <p className="panel-texto">
           El título del INRA se registra junto con el predio. Aquí se agregan los documentos de la ABT: si el predio no entra
-          en la exención de la Ley 741, necesita el plan de ordenamiento predial y, si declara desmonte, el plan de desmonte. Se registran los datos del documento; la subida del archivo PDF o imagen llegará más adelante.
+          en la exención de la Ley 741, necesita el plan de ordenamiento predial y, si declara desmonte, el plan de desmonte. Cada documento lleva sus datos y su archivo escaneado (PDF, JPG o PNG).
         </p>
       </section>
     </>

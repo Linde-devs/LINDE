@@ -8,6 +8,7 @@ import Etiqueta from '../components/Etiqueta.jsx'
 import MapaPredio from '../components/MapaPredio.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
 import { nombresCapa } from '../components/VistaExpediente.jsx'
+import BotonArchivo from '../components/BotonArchivo.jsx'
 
 const nombresDocumento = {
   TituloPropiedad: 'Título de propiedad (INRA)',
@@ -178,7 +179,8 @@ export default function Revision({ cu }) {
                   {d.documentos.map((doc) => (
                     <li key={doc.id}>
                       {nombresDocumento[doc.tipo] ?? doc.tipo} {doc.numero ?? ''}
-                      {doc.superficieHa != null ? ` · ${ha(doc.superficieHa)}` : ''}
+                      {doc.superficieHa != null ? ` · ${ha(doc.superficieHa)}` : ''}{' '}
+                      {doc.archivoClave ? <BotonArchivo documento={doc} /> : <span className="texto-aviso">sin archivo</span>}
                     </li>
                   ))}
                 </ul>
