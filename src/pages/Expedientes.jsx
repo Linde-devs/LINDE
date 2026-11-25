@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FolderOpen, Printer, ExternalLink } from 'lucide-react'
+import { Download, FolderOpen, Printer, ExternalLink } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import Encabezado from '../components/Encabezado.jsx'
@@ -40,6 +40,22 @@ export default function Expedientes({ cu }) {
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  // RNF-06. Descarga el polígono del expediente en GeoJSON (RFC 7946), con sus coordenadas sin redondear.
+  async function descargarGeoJson() {
+    setError('')
+    try {
+      const archivo = await api(`/expedientes/${expediente.codigo}/geojson`, { comoArchivo: true })
+      const url = URL.createObjectURL(archivo)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `${expediente.codigo}.geojson`
+      enlace.click()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   async function generar() {
     setError('')
@@ -94,6 +110,10 @@ export default function Expedientes({ cu }) {
                     <ExternalLink size={16} />
                     Consulta pública
                   </a>
+                  <button className="btn btn-secundario" onClick={descargarGeoJson} title="Polígono en GeoJSON (RFC 7946)">
+                    <Download size={16} />
+                    GeoJSON
+                  </button>
                   <button className="btn btn-secundario" onClick={() => window.print()}>
                     <Printer size={16} />
                     Imprimir o guardar PDF

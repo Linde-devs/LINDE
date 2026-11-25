@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Send } from 'lucide-react'
+import { History, Send } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import Encabezado from '../components/Encabezado.jsx'
@@ -15,6 +15,8 @@ const nombresCapa = {
   Cobertura: 'Cobertura satelital',
 }
 
+const etiquetasEstadoCapa = { Conforme: 'conforme', Alerta: 'alerta', Rechazado: 'rechazada' }
+
 // Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
 const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
 
@@ -27,6 +29,7 @@ export default function Envio({ cu }) {
   const [predios, setPredios] = useState([])
   const [cargando, setCargando] = useState(true)
   const [resultado, setResultado] = useState(null)
+  const [envios, setEnvios] = useState([])
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [requisitos, setRequisitos] = useState(null)
@@ -48,6 +51,7 @@ export default function Envio({ cu }) {
     try {
       const [historial, req] = await Promise.all([api(`/predios/${id}/validaciones`), api(`/predios/${id}/requisitos`)])
       setResultado(historial[0] ?? null)
+      setEnvios(historial)
       setRequisitos(req)
     } catch (e) {
       setError(e.message)
@@ -72,7 +76,7 @@ export default function Envio({ cu }) {
     setEnviando(true)
     try {
       setResultado(await api(`/predios/${seleccionado}/enviar`, { metodo: 'POST' }))
-      await cargarPredios()
+      await Promise.all([cargarPredios(), cargarUltimo(seleccionado)])
     } catch (err) {
       setError(err.message)
     } finally {
@@ -166,6 +170,43 @@ export default function Envio({ cu }) {
           <p className="panel-vacio">Este predio todavía no se envió a revisión.</p>
         )}
       </section>
+
+      {envios.length > 1 && (
+        <section className="panel">
+          <h2 className="panel-titulo"><History size={18} />Envíos anteriores</h2>
+          <p className="panel-texto">
+            Cada envío queda guardado con la versión del polígono que se revisó. Así se ve el ciclo de corregir y reenviar.
+          </p>
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>N.º</th>
+                <th>Fecha</th>
+                <th>Polígono</th>
+                <th>Resultado</th>
+                <th>Capas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {envios.map((e, i) => (
+                <tr key={e.id}>
+                  <td>{envios.length - i}</td>
+                  <td className="sin-salto">{new Date(e.fecha).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                  <td>Versión {e.versionPoligono}</td>
+                  <td>
+                    {e.cortado
+                      ? <span className="etiqueta etiqueta-error">Devuelto por la geometría</span>
+                      : <Etiqueta valor={e.estadoResultante} />}
+                  </td>
+                  <td>
+                    {e.capas.map((c) => `${nombresCapa[c.capa] ?? c.capa}: ${etiquetasEstadoCapa[c.estado] ?? c.estado}`).join(' · ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
     </>
   )
 }
