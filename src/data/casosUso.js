@@ -11,6 +11,7 @@ import {
   Layers,
   SlidersHorizontal,
   KeyRound,
+  ScrollText,
 } from 'lucide-react'
 
 // Roles tal como los envía la API (RolUsuario).
@@ -58,6 +59,10 @@ export const casosUso = [
   { codigo: 'CU-12', nombre: 'Gestionar parámetros', ruta: 'parametros', grupo: 'Administración', icono: SlidersHorizontal,
     roles: [ADMIN],
     descripcion: 'Fecha de corte, umbrales y exenciones de la Ley 741.' },
+  // No es un caso de uso del diagrama: es la consulta de la bitácora de auditoría (RNF-05).
+  { codigo: 'RNF-05', nombre: 'Bitácora de auditoría', ruta: 'bitacora', grupo: 'Administración', icono: ScrollText,
+    roles: [ADMIN],
+    descripcion: 'Quién hizo cada operación, cuándo, con qué datos anteriores y si salió bien.' },
 ]
 
 export const grupos = ['Registro', 'Validación', 'Expedientes', 'Administración']

@@ -425,3 +425,11 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 
 /* RNF-05: historial del polígono y bitácora */
 .margen-izq { margin-left: 8px; }
+.sin-salto { white-space: nowrap; }
+.nota-chica { font-size: 12px; color: var(--color-texto-2); margin-top: 4px; }
+.valores-anteriores { margin-top: 4px; font-size: 12px; }
+.valores-anteriores summary { cursor: pointer; color: var(--color-info-texto); }
+.valores-anteriores pre {
+  max-width: 520px; max-height: 240px; overflow: auto; margin: 6px 0 0; padding: 8px;
+  background: var(--color-fondo); border: 1px solid var(--color-borde); border-radius: 6px; font-size: 11.5px;
+}
