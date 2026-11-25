@@ -10,6 +10,7 @@ import Campo from '../components/Campo.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
 import MapaPredio from '../components/MapaPredio.jsx'
 import MapaDibujo from '../components/MapaDibujo.jsx'
+import HistorialPoligono from '../components/HistorialPoligono.jsx'
 
 // Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
 const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
@@ -58,6 +59,7 @@ export default function Poligonos({ cu }) {
   const [motivo, setMotivo] = useState('')
   const [gps, setGps] = useState(null)
   const [buscandoGps, setBuscandoGps] = useState(false)
+  const [comparada, setComparada] = useState(null)
 
   const seleccionado = Number(parametros.get('predio')) || predios[0]?.id
   const predio = predios.find((p) => p.id === seleccionado)
@@ -98,6 +100,7 @@ export default function Poligonos({ cu }) {
     setModo('poligono')
     setTrazo([])
     setMotivo('')
+    setComparada(null)
     setGps(null)
   }
 
@@ -247,7 +250,10 @@ export default function Poligonos({ cu }) {
       <div className="dos-columnas">
         <section className="panel">
           <h2 className="panel-titulo">Geometría vigente</h2>
-          <MapaPredio vertices={poligono?.vertices} />
+          <MapaPredio vertices={poligono?.vertices} referencia={comparada?.vertices} />
+          {comparada && (
+            <p className="nota">En gris punteado: versión {comparada.version} ({comparada.motivo}).</p>
+          )}
           {!poligono && <p className="panel-texto centrado">Este predio todavía no tiene polígono ni punto registrado.</p>}
           {poligono && (
             <>
@@ -387,6 +393,11 @@ export default function Poligonos({ cu }) {
           </section>
         </div>
       </div>
+
+      {poligono && (
+        <HistorialPoligono predioId={seleccionado} versionVigente={poligono.version} comparada={comparada}
+          onComparar={setComparada} />
+      )}
     </>
   )
 }

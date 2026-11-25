@@ -422,3 +422,6 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .campo textarea:focus { outline: none; border-color: var(--color-info); box-shadow: 0 0 0 3px var(--color-info-fondo); }
 .campo textarea.invalido { border-color: var(--color-error); }
 .capa-cabecera > span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* RNF-05: historial del polígono y bitácora */
+.margen-izq { margin-left: 8px; }

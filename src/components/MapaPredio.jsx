@@ -7,12 +7,14 @@ const SANTA_CRUZ = [-17.78, -63.18]
 
 // Muestra el polígono o el punto del predio sobre el mapa base de OpenStreetMap.
 // Al pasar el cursor, la esquina inferior izquierda muestra la latitud y la longitud de esa posición.
-// Solo es una vista: el dibujo con clics llega con el RF-04.
+// Solo es una vista; el dibujo con clics está en MapaDibujo (RF-04).
+// "referencia" es otra geometría que se dibuja en gris punteado debajo, por ejemplo una versión anterior (RNF-05).
 // Las coordenadas llegan como { lon, lat } (orden GeoJSON); Leaflet usa [lat, lon].
-export default function MapaPredio({ vertices }) {
+export default function MapaPredio({ vertices, referencia }) {
   const contenedor = useRef(null)
   const mapa = useRef(null)
   const capa = useRef(null)
+  const capaReferencia = useRef(null)
 
   // El mapa se crea una sola vez y se destruye al salir de la pantalla.
   useEffect(() => {
@@ -21,6 +23,7 @@ export default function MapaPredio({ vertices }) {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(m)
+    capaReferencia.current = L.layerGroup().addTo(m)
     capa.current = L.layerGroup().addTo(m)
 
     // Coordenadas bajo el cursor, con 6 decimales como pide el RF-05.
@@ -70,6 +73,24 @@ export default function MapaPredio({ vertices }) {
       m.fitBounds(poligono.getBounds(), { padding: [24, 24] })
     }
   }, [vertices])
+
+  // Geometría de referencia: se dibuja debajo y el mapa se encuadra para que se vean las dos.
+  useEffect(() => {
+    const m = mapa.current
+    if (!m) return
+    capaReferencia.current.clearLayers()
+    if (!referencia || referencia.length === 0) return
+
+    const puntos = referencia.map((v) => [v.lat, v.lon])
+    const forma = puntos.length === 1
+      ? L.circleMarker(puntos[0], { radius: 8, color: '#6B7280', weight: 2, dashArray: '4 4', fillOpacity: 0.1 })
+      : L.polygon(puntos, { color: '#6B7280', weight: 2, dashArray: '6 6', fillColor: '#9CA3AF', fillOpacity: 0.15 })
+    forma.addTo(capaReferencia.current)
+
+    const limites = L.latLngBounds(puntos)
+    if (vertices?.length) vertices.forEach((v) => limites.extend([v.lat, v.lon]))
+    m.fitBounds(limites, { padding: [24, 24], maxZoom: 17 })
+  }, [referencia, vertices])
 
   return <div ref={contenedor} className="mapa-predio" role="region" aria-label="Mapa del predio" />
 }
