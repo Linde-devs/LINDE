@@ -128,7 +128,7 @@ export default function Expedientes({ cu }) {
           </div>
           {predio && !enviado(predio) && (
             <p className="nota">
-              Primero envía el predio a revisión. <Link to={`/app/envio?predio=${predio.id}`}>Enviar a revisión</Link>
+              Primero envía el predio a revisión. <Link to={`/app/envio?predio=${predio.id}&enviar=1`}>Enviar a revisión</Link>
             </p>
           )}
           {predio && enviado(predio) && !expediente && (

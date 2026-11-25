@@ -86,16 +86,16 @@ export default function Validacion({ cu }) {
           <div className="panel-cabecera">
             <h2>{predio?.nombre}</h2>
             {r.completo && !yaEnviado && (
-              <Link to={`/app/envio?predio=${seleccionado}`} className="btn btn-primario">
+              <Link to={`/app/envio?predio=${seleccionado}&enviar=1`} className="btn btn-primario">
                 <Send size={16} />
-                Ir a enviar a revisión
+                Enviar a revisión
               </Link>
             )}
           </div>
 
           <div className={`mensaje ${r.completo ? 'mensaje-exito' : 'mensaje-aviso'}`}>
             {yaEnviado
-              ? 'El predio ya está aprobado.'
+              ? 'El predio ya está aprobado. Si corriges algo, vuelve a «Registrado» y tendrás que enviarlo de nuevo.'
               : r.completo
                 ? 'El predio tiene todo lo necesario: ya puedes enviarlo a revisión, donde se comprobará que los datos sean correctos.'
                 : `Faltan ${pendientes} ${pendientes === 1 ? 'requisito' : 'requisitos'} para poder enviarlo a revisión.`}
@@ -109,7 +109,7 @@ export default function Validacion({ cu }) {
                   <strong>{x.nombre}</strong>
                   <span>{x.detalle}</span>
                 </div>
-                {!x.cumplido && !yaEnviado && (
+                {!x.cumplido && (
                   <Link {...enlaceRequisito(x, seleccionado)} className="btn btn-secundario btn-chico">
                     {textoBoton[x.ruta] ?? 'Completar'}
                   </Link>

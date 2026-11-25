@@ -200,6 +200,7 @@ a { color: var(--color-info-texto); }
   padding: 8px 12px; border-radius: var(--radio); }
 .mensaje-info { background: var(--color-info-fondo); color: var(--color-info-texto); }
 .espacio-arriba { margin-top: 16px; text-decoration: none; }
+.espacio-abajo { margin-bottom: 16px; }
 .btn-icono {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
   border: 1px solid transparent; border-radius: var(--radio); background: none;

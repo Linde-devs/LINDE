@@ -109,7 +109,7 @@ export default function Revision({ cu }) {
             </div>
             {predio.estado === 'Registrado' && (
               <p className="nota">
-                El predio todavía no se envió a revisión. <Link to={`/app/envio?predio=${predio.id}`}>Enviar a revisión</Link>
+                El predio todavía no se envió a revisión. <Link to={`/app/envio?predio=${predio.id}&enviar=1`}>Enviar a revisión</Link>
               </p>
             )}
             {predio.estado === 'ConAlertas' && (

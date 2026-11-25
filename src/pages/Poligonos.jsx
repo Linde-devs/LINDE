@@ -12,8 +12,8 @@ import MapaPredio from '../components/MapaPredio.jsx'
 import MapaDibujo from '../components/MapaDibujo.jsx'
 import HistorialPoligono from '../components/HistorialPoligono.jsx'
 
-// Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
-const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
+// El polígono se puede corregir en cualquier estado; si el predio ya se envió, vuelve a "Registrado" (patrón State).
+const editable = (p) => Boolean(p)
 
 // Centroide del polígono (fórmula del área con signo, en grados). Sirve como coordenada de referencia del predio.
 function centroide(vertices) {
@@ -302,9 +302,10 @@ export default function Poligonos({ cu }) {
         </section>
 
         <div className="columna">
-          {!sePuedeEditar && (
-            <div className="mensaje mensaje-info">
-              El predio está en revisión o aprobado: su polígono ya no se puede cambiar.
+          {predio && predio.estado !== 'Registrado' && (
+            <div className="mensaje mensaje-aviso">
+              El predio ya se envió a revisión ({predio.estado === 'Aprobado' ? 'aprobado' : 'con alertas'}). Si cambias el
+              polígono, vuelve a «Registrado» y tendrás que enviarlo de nuevo.
             </div>
           )}
 

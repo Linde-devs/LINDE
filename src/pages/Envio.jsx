@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { History, Send } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -17,11 +17,13 @@ const nombresCapa = {
 
 const etiquetasEstadoCapa = { Conforme: 'conforme', Alerta: 'alerta', Rechazado: 'rechazada' }
 
-// Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
+// Se envía un predio registrado o con alertas. Uno aprobado no se reenvía tal cual: si se corrige algún dato vuelve a
+// "Registrado" y entonces sí.
 const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
 
 // CU-06. Envía el predio a las cuatro capas de validación. Si la geometría no es válida, el predio declara más de 4 ha
 // con solo un punto (RF-05) o se superpone con otro predio sobre la tolerancia (RF-06), vuelve al productor con el motivo.
+// Si se llega con ?enviar=1 (desde "Enviar a revisión" en otra pantalla), el envío empieza solo al cargar el predio.
 export default function Envio({ cu }) {
   const { api, usuarioActual } = useAuth()
   const [parametros, setParametros] = useSearchParams()
@@ -62,6 +64,21 @@ export default function Envio({ cu }) {
     cargarPredios()
   }, [cargarPredios])
 
+  // CU-07: solo se envía si el predio tiene todos los requisitos.
+  const req = requisitos?.predioId === seleccionado ? requisitos : null
+  const pendientes = req ? req.requisitos.filter((r) => !r.cumplido) : []
+  const puedeEnviar = predio && editable(predio) && req?.completo
+
+  // Envío automático una sola vez: se quita ?enviar=1 de la dirección para que recargar la página no reenvíe.
+  const autoEnviado = useRef(false)
+  useEffect(() => {
+    if (parametros.get('enviar') !== '1' || autoEnviado.current || !req || !predio) return
+    autoEnviado.current = true
+    setParametros({ predio: String(seleccionado) }, { replace: true })
+    if (puedeEnviar) enviar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parametros, req, predio, puedeEnviar])
+
   useEffect(() => {
     if (seleccionado) cargarUltimo(seleccionado)
   }, [seleccionado, cargarUltimo])
@@ -99,11 +116,6 @@ export default function Envio({ cu }) {
     )
   }
 
-  // CU-07: solo se envía si el predio tiene todos los requisitos.
-  const req = requisitos?.predioId === seleccionado ? requisitos : null
-  const pendientes = req ? req.requisitos.filter((r) => !r.cumplido) : []
-  const puedeEnviar = predio && editable(predio) && req?.completo
-
   return (
     <>
       <Encabezado titulo={cu.nombre} descripcion={cu.descripcion} />
@@ -136,10 +148,13 @@ export default function Envio({ cu }) {
           </div>
         )}
         {predio && !editable(predio) && (
-          <p className="nota">El predio está aprobado: las cuatro capas quedaron conformes. Ya puedes generar su expediente.</p>
+          <p className="nota">
+            El predio está aprobado: las cuatro capas quedaron conformes. Ya puedes generar su expediente. Si corriges un
+            dato, el polígono o un documento, vuelve a «Registrado» y tendrás que enviarlo de nuevo.
+          </p>
         )}
         {predio && (predio.estado === 'ConAlertas' || predio.estado === 'Aprobado') && (
-          <div className="acciones espacio-arriba">
+          <div className="acciones espacio-arriba espacio-abajo">
             {predio.estado === 'ConAlertas' && (
               <Link to={`/app/revision?predio=${predio.id}`} className="btn btn-secundario">Ver en la vista para revisión</Link>
             )}
@@ -149,6 +164,11 @@ export default function Envio({ cu }) {
 
         {resultado ? (
           <>
+            {predio?.estado === 'Registrado' && !resultado.cortado && (
+              <div className="mensaje mensaje-aviso">
+                Este es el resultado del último envío, pero el predio cambió después: envíalo de nuevo para validar los datos actuales.
+              </div>
+            )}
             <div className={`mensaje ${resultado.cortado ? 'mensaje-error' : 'mensaje-exito'}`}>{resultado.mensaje}</div>
             <ul className="capas">
               {resultado.capas.map((c) => (

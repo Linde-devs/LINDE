@@ -8,7 +8,7 @@ import Encabezado from '../components/Encabezado.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 import SelectorPredio from '../components/SelectorPredio.jsx'
 import BotonArchivo from '../components/BotonArchivo.jsx'
-import { numero } from '../data/validaciones.js'
+import { MENSAJE_TITULO, numero, tituloValido } from '../data/validaciones.js'
 
 export const tiposDocumento = {
   TituloPropiedad: 'Título de propiedad (INRA)',
@@ -16,7 +16,8 @@ export const tiposDocumento = {
   PlanDesmonte: 'Plan de desmonte (ABT)',
 }
 
-const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
+// Los documentos se pueden cambiar en cualquier estado; si el predio ya se envió, vuelve a "Registrado" (patrón State).
+const editable = (p) => Boolean(p)
 const ha = (n) => `${Number(n).toLocaleString('es-BO', { maximumFractionDigits: 2 })} ha`
 
 // CU-05. Gestionar documentos: el productor registra los datos del título del INRA y de las autorizaciones de la ABT.
@@ -117,6 +118,7 @@ export default function Documentos({ cu }) {
   function validar(f) {
     const e = {}
     if (!f.numero.trim()) e.numero = 'Escribe el número del documento.'
+    else if (f.tipo === 'TituloPropiedad' && !tituloValido(f.numero)) e.numero = MENSAJE_TITULO
     if (f.tipo === 'TituloPropiedad' && !/^\d{5,10}$/.test(f.titularCi.trim()))
       e.titularCi = 'Escribe el CI del titular que figura en el título (5 a 10 dígitos).'
     const sup = numero(f.superficieHa)
@@ -241,8 +243,11 @@ export default function Documentos({ cu }) {
       {aviso && <div className="mensaje mensaje-exito">{aviso}</div>}
       {error && <div className="mensaje mensaje-error">{error}</div>}
 
-      {predio && !puedeEditar && (
-        <p className="nota">El predio está aprobado: sus documentos ya no se modifican.</p>
+      {predio && predio.estado !== 'Registrado' && (
+        <div className="mensaje mensaje-aviso">
+          El predio ya se envió a revisión ({predio.estado === 'Aprobado' ? 'aprobado' : 'con alertas'}). Si agregas, quitas o
+          cambias un documento, vuelve a «Registrado» y tendrás que enviarlo de nuevo.
+        </div>
       )}
 
       {formulario && (

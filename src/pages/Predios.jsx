@@ -25,9 +25,8 @@ const vacio = {
 
 const cultivos = ['Soya', 'Maíz', 'Girasol', 'Sorgo', 'Trigo', 'Arroz', 'Caña de azúcar', 'Café', 'Cacao', 'Chía', 'Sésamo', 'Frejol']
 
-// Se puede editar o eliminar mientras el predio no está en revisión ni aprobado (patrón State en la API).
-// Un predio con alertas se puede corregir y volver a enviar; uno aprobado ya no se modifica.
-const editable = (p) => p.estado === 'Registrado' || p.estado === 'ConAlertas'
+// Un predio se puede corregir o eliminar en cualquier estado (patrón State en la API). Si estaba con alertas o aprobado
+// y cambia algún dato, vuelve a "Registrado" y hay que enviarlo de nuevo a revisión.
 const sinTildes = (t) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 function textoPoligono(p) {
@@ -150,7 +149,10 @@ export default function Predios({ cu }) {
   }
 
   async function eliminar(predio) {
-    if (!window.confirm(`¿Eliminar el predio "${predio.nombre}" junto con su polígono y sus documentos?`)) return
+    const conExpediente = predio.estado === 'Aprobado' || predio.estado === 'ConAlertas'
+      ? ' También se eliminan sus alertas y sus expedientes: sus códigos dejarán de funcionar en la consulta pública.'
+      : ''
+    if (!window.confirm(`¿Eliminar el predio "${predio.nombre}" junto con su polígono y sus documentos?${conExpediente}`)) return
     setAviso('')
     try {
       await api(`/predios/${predio.id}`, { metodo: 'DELETE' })
@@ -162,6 +164,8 @@ export default function Predios({ cu }) {
   }
 
   const nuevo = formulario?.id === null
+  const estadoEditado = !nuevo && lista.find((p) => p.id === formulario?.id)?.estado
+  const enviadoAntes = estadoEditado === 'Aprobado' || estadoEditado === 'ConAlertas' ? estadoEditado : null
 
   // Búsqueda sin distinguir mayúsculas ni tildes, y filtro por estado.
   const texto = sinTildes(busqueda.trim())
@@ -197,6 +201,12 @@ export default function Predios({ cu }) {
           </div>
 
           {errores.general && <div className="mensaje mensaje-error">{errores.general}</div>}
+          {enviadoAntes && (
+            <div className="mensaje mensaje-aviso">
+              Este predio ya se envió a revisión ({enviadoAntes === 'Aprobado' ? 'aprobado' : 'con alertas'}). Si cambias algún
+              dato, vuelve a «Registrado» y tendrás que enviarlo de nuevo. Los expedientes que ya generaste no cambian.
+            </div>
+          )}
 
           {esAdmin && (
             <Campo name="productorId" etiqueta="Productor" valor={datos.productorId} error={errores.productorId} onChange={cambiar}>
@@ -321,16 +331,12 @@ export default function Predios({ cu }) {
                         aria-label="Polígono" title="Polígono">
                         <Hexagon size={16} />
                       </button>
-                      {editable(p) && (
-                        <>
-                          <button className="btn-icono" onClick={() => abrir(p)} aria-label="Editar" title="Editar">
-                            <Pencil size={16} />
-                          </button>
-                          <button className="btn-icono peligro" onClick={() => eliminar(p)} aria-label="Eliminar" title="Eliminar">
-                            <Trash2 size={16} />
-                          </button>
-                        </>
-                      )}
+                      <button className="btn-icono" onClick={() => abrir(p)} aria-label="Editar" title="Editar">
+                        <Pencil size={16} />
+                      </button>
+                      <button className="btn-icono peligro" onClick={() => eliminar(p)} aria-label="Eliminar" title="Eliminar">
+                        <Trash2 size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}

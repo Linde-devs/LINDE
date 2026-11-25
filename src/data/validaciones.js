@@ -8,6 +8,12 @@ const RUNPA = /^[0-9A-Za-z-]{1,20}$/
 const TELEFONO = /^\+?\d{7,12}$/
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Número del título ejecutorial del INRA: tipo de título, NAL y el número (por ejemplo SPP-NAL-070167).
+// Se aceptan minúsculas y espacios en lugar de guiones; la API lo guarda normalizado.
+export const normalizarTitulo = (t) => (t ?? '').trim().toUpperCase().replace(/[\s_\-–]+/g, '-').replace(/^-|-$/g, '')
+export const tituloValido = (t) => /^[A-Z]{2,5}-NAL-\d{4,7}$/.test(normalizarTitulo(t))
+export const MENSAJE_TITULO = 'Tiene la forma del INRA: tipo de título, NAL y el número, por ejemplo SPP-NAL-070167.'
+
 // RF-01
 export function validarProductor(d, { conCuenta = false } = {}) {
   const errores = {}
@@ -65,7 +71,7 @@ export function validarPredio(d, { requiereProductor = false } = {}) {
     else if (tieneMasDeDosDecimales(d.desmonteDeclaradoHa)) errores.desmonteDeclaradoHa = 'Máximo 2 decimales.'
     else if (superficie > 0 && desmonte > superficie) errores.desmonteDeclaradoHa = 'No puede ser mayor que la superficie.'
   }
-  if (d.numeroTituloInra.trim().length > 30) errores.numeroTituloInra = 'Hasta 30 caracteres.'
+  if (d.numeroTituloInra.trim() && !tituloValido(d.numeroTituloInra)) errores.numeroTituloInra = MENSAJE_TITULO
 
   // Título del INRA: se puede completar después, pero si se llena debe ser válido.
   const ci = (d.titularCi ?? '').trim()
