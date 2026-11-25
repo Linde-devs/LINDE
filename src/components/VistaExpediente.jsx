@@ -2,6 +2,18 @@ import Etiqueta from './Etiqueta.jsx'
 import MapaPredio from './MapaPredio.jsx'
 import { fechaCorta, resultadosInspeccion } from './Inspecciones.jsx'
 
+// El expediente guarda cada documento como "TituloPropiedad TIT-0214" (tipo interno y número).
+// Aquí el tipo se cambia por su nombre, también en los expedientes ya generados.
+const tipos = {
+  TituloPropiedad: 'Título de propiedad (INRA)',
+  PlanOrdenamientoPredial: 'Plan de ordenamiento predial (ABT)',
+  PlanDesmonte: 'Plan de desmonte (ABT)',
+}
+const nombreDocumento = (texto) => {
+  const [tipo, ...resto] = texto.split(' ')
+  return tipos[tipo] ? [tipos[tipo], ...resto].join(' ') : texto
+}
+
 export const nombresCapa = {
   Geometrica: 'Geometría y superposición',
   Titularidad: 'Titularidad (INRA)',
@@ -100,7 +112,7 @@ export default function VistaExpediente({ expediente: e }) {
         {e.documentos.length > 0 ? (
           <ul className="lista-simple">
             {e.documentos.map((d) => (
-              <li key={d}>{d}</li>
+              <li key={d}>{nombreDocumento(d)}</li>
             ))}
           </ul>
         ) : (

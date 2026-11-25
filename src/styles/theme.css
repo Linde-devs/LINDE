@@ -433,3 +433,7 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   max-width: 520px; max-height: 240px; overflow: auto; margin: 6px 0 0; padding: 8px;
   background: var(--color-fondo); border: 1px solid var(--color-borde); border-radius: 6px; font-size: 11.5px;
 }
+
+/* Consulta pública: el contenedor centrado con márgenes, como el resto de las pantallas */
+.consulta > .contenedor { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+@media (max-width: 800px) { .consulta > .contenedor { padding: 16px; } }
