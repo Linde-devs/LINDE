@@ -23,6 +23,7 @@ const campos = [
     ayuda: 'Franja alrededor del polígono para consultar la cobertura de bosque. Se usará con Google Earth Engine.' },
 ]
 
+const porcentaje = (n) => n.toLocaleString('es-BO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const fechaHora = (f) => new Date(f).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' })
 
 // CU-12. Gestionar parámetros: el administrador cambia la fecha de corte y los umbrales sin tocar el código.
@@ -156,9 +157,10 @@ export default function Parametros({ cu }) {
         </p>
         {prueba?.conectado && (
           <div className="mensaje mensaje-exito">
-            Conectado. Polígono de prueba cerca de San Julián: {prueba.bosquePorcentajeCorte.toFixed(1)} % de bosque en 2020 y{' '}
-            {prueba.bosquePorcentajeActual.toFixed(1)} % de árboles ahora (imagen del{' '}
+            Conectado. Polígono de prueba cerca de San Julián: {porcentaje(prueba.bosquePorcentajeCorte)} % de bosque en 2020
+            y {porcentaje(prueba.bosquePorcentajeActual)} % de árboles ahora (imagen del{' '}
             {prueba.fechaImagenActual.split('-').reverse().join('/')}).
+            {prueba.aviso && <div className="nota-chica">{prueba.aviso}</div>}
           </div>
         )}
         {prueba && !prueba.conectado && <div className="mensaje mensaje-error">{prueba.error}</div>}

@@ -10,6 +10,7 @@ import SelectorPredio from '../components/SelectorPredio.jsx'
 import { nombresCapa } from '../components/VistaExpediente.jsx'
 import BotonArchivo from '../components/BotonArchivo.jsx'
 import Inspecciones from '../components/Inspecciones.jsx'
+import ImagenesSatelitales from '../components/ImagenesSatelitales.jsx'
 
 const nombresDocumento = {
   TituloPropiedad: 'Título de propiedad (INRA)',
@@ -46,13 +47,14 @@ export default function Revision({ cu }) {
     async (id) => {
       setError('')
       try {
-        const [poligono, documentos, validaciones, alertas] = await Promise.all([
+        const [poligono, documentos, validaciones, alertas, zonas] = await Promise.all([
           api(`/predios/${id}/poligono`).catch(() => null),
           api(`/predios/${id}/documentos`),
           api(`/predios/${id}/validaciones`),
           api(`/alertas?predioId=${id}`),
+          api(`/predios/${id}/zonas-capas`).catch(() => []),
         ])
-        setDetalle({ id, poligono, documentos, validacion: validaciones[0] ?? null, alertas })
+        setDetalle({ id, poligono, documentos, validacion: validaciones[0] ?? null, alertas, zonas })
       } catch (e) {
         setError(e.message)
       }
@@ -145,7 +147,7 @@ export default function Revision({ cu }) {
           <div className="dos-columnas">
             <section className="panel">
               <h2 className="panel-titulo">Ubicación</h2>
-              <MapaPredio vertices={d.poligono?.vertices} />
+              <MapaPredio vertices={d.poligono?.vertices} zonas={d.zonas} />
               {d.poligono ? (
                 <p className="panel-texto">
                   {d.poligono.esPunto
@@ -154,6 +156,18 @@ export default function Revision({ cu }) {
                 </p>
               ) : (
                 <p className="panel-texto">El predio todavía no tiene polígono ni punto.</p>
+              )}
+              {d.zonas?.length > 0 && (
+                <ul className="zonas-capas">
+                  {d.zonas.map((z) => (
+                    <li key={z.capa} className={z.superaTolerancia ? 'zona-alerta' : 'zona-margen'}>
+                      <span className="zona-muestra" aria-hidden="true" />
+                      {z.titulo}: {z.areaHa.toLocaleString('es-BO', { maximumFractionDigits: 2 })} ha
+                      ({z.porcentaje.toLocaleString('es-BO')} % del polígono)
+                      {!z.superaTolerancia && ' · dentro de la tolerancia, no genera alerta'}
+                    </li>
+                  ))}
+                </ul>
               )}
             </section>
 
@@ -215,6 +229,8 @@ export default function Revision({ cu }) {
               <p className="panel-texto">Todavía no hay validaciones para este predio.</p>
             )}
           </section>
+
+          <ImagenesSatelitales predioId={predio.id} vertices={d.poligono?.vertices} />
 
           <Inspecciones predioId={predio.id} />
         </div>

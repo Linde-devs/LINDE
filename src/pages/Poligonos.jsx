@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Crosshair, FileUp, MapPin, PenLine, ShieldCheck, Trash2, Undo2 } from 'lucide-react'
+import { Crosshair, FileText, FileUp, MapPin, PenLine, Trash2, Undo2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import { validarPunto } from '../data/validaciones.js'
@@ -40,6 +40,8 @@ const seis = (n) => n.toFixed(6)
 // Cada geometría guardada crea una versión nueva y conserva las anteriores (Prototype, en la API).
 // La API rechaza la geometría inválida en el momento de cargarla e indica el tipo de error.
 // La superposición con otros predios (RF-06) se revisa al enviar el predio a revisión.
+const precision = (m) => (m == null ? 'Manual' : `±${m.toLocaleString('es-BO')} m`)
+
 export default function Poligonos({ cu }) {
   const { api, usuarioActual } = useAuth()
   const [parametros, setParametros] = useSearchParams()
@@ -110,10 +112,11 @@ export default function Poligonos({ cu }) {
     setBuscandoGps(true)
     try {
       const u = await ubicacionActual()
-      const v = { lat: Number(u.lat.toFixed(6)), lon: Number(u.lon.toFixed(6)) }
+      // RF-04: la precisión del GPS se guarda con cada vértice, redondeada a 0,1 m.
+      const v = { lat: Number(u.lat.toFixed(6)), lon: Number(u.lon.toFixed(6)), precisionM: Math.round(u.precisionM * 10) / 10 }
       setGps(u.precisionM)
       if (destino === 'punto') {
-        setPunto({ lat: String(v.lat), lon: String(v.lon) })
+        setPunto({ lat: String(v.lat), lon: String(v.lon), precisionM: v.precisionM })
         setErroresPunto({})
       } else setTrazo((t) => [...t, v])
     } catch (err) {
@@ -193,7 +196,7 @@ export default function Poligonos({ cu }) {
     try {
       const guardado = await api(`/predios/${seleccionado}/poligono`, {
         metodo: 'PUT',
-        cuerpo: { vertices: [{ lon: Number(punto.lon), lat: Number(punto.lat) }], motivo: null },
+        cuerpo: { vertices: [{ lon: Number(punto.lon), lat: Number(punto.lat), precisionM: punto.precisionM ?? null }], motivo: null },
       })
       await despues(guardado, 'coordenadas')
       setPunto({ lat: '', lon: '' })
@@ -222,6 +225,8 @@ export default function Poligonos({ cu }) {
   const requierePoligono = predio && predio.superficieDeclaradaHa > 4
   const sePuedeEditar = predio && editable(predio)
   const centro = poligono ? centroide(poligono.vertices) : null
+  // RF-04: la columna de precisión solo aparece si algún vértice se tomó con el GPS.
+  const conGps = poligono?.precisionesM?.some((p) => p != null) ?? false
   // RF-05: con más de 4 ha el punto nunca se acepta, así que no se ofrece.
   const formulario = requierePoligono && modo === 'punto' ? 'poligono' : modo
   const modos = [
@@ -235,9 +240,9 @@ export default function Poligonos({ cu }) {
     <>
       <Encabezado titulo={cu.nombre} descripcion={cu.descripcion}>
         {poligono && sePuedeEditar && (
-          <Link to={`/app/validacion?predio=${seleccionado}`} className="btn btn-primario">
-            <ShieldCheck size={16} />
-            Validar predio
+          <Link to={`/app/documentos?predio=${seleccionado}`} className="btn btn-primario">
+            <FileText size={16} />
+            Gestionar documentos
           </Link>
         )}
       </Encabezado>
@@ -261,7 +266,10 @@ export default function Poligonos({ cu }) {
                 <dt>Tipo</dt>
                 <dd>{poligono.esPunto ? 'Punto' : `Polígono de ${poligono.vertices.length - 1} vértices`}</dd>
                 <dt>{poligono.esPunto ? 'Coordenadas' : 'Centro del predio'}</dt>
-                <dd>Lat. {seis(centro.lat)}, long. {seis(centro.lon)}</dd>
+                <dd>
+                  Lat. {seis(centro.lat)}, long. {seis(centro.lon)}
+                  {poligono.esPunto && conGps ? ` (GPS ${precision(poligono.precisionesM[0])})` : ''}
+                </dd>
                 {!poligono.esPunto && (<><dt>Superficie calculada</dt><dd>{poligono.areaHa?.toLocaleString('es-BO')} ha</dd></>)}
                 <dt>Superficie declarada</dt>
                 <dd>{predio?.superficieDeclaradaHa.toLocaleString('es-BO')} ha</dd>
@@ -273,11 +281,17 @@ export default function Poligonos({ cu }) {
                   <summary>Ver los {poligono.vertices.length - 1} vértices</summary>
                   <table className="tabla">
                     <thead>
-                      <tr><th>N.º</th><th className="numero">Latitud</th><th className="numero">Longitud</th></tr>
+                      <tr>
+                        <th>N.º</th><th className="numero">Latitud</th><th className="numero">Longitud</th>
+                        {conGps && <th className="numero">Precisión GPS</th>}
+                      </tr>
                     </thead>
                     <tbody>
                       {poligono.vertices.slice(0, -1).map((v, i) => (
-                        <tr key={i}><td>{i + 1}</td><td className="numero">{seis(v.lat)}</td><td className="numero">{seis(v.lon)}</td></tr>
+                        <tr key={i}>
+                          <td>{i + 1}</td><td className="numero">{seis(v.lat)}</td><td className="numero">{seis(v.lon)}</td>
+                          {conGps && <td className="numero">{precision(poligono.precisionesM[i])}</td>}
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -350,13 +364,14 @@ export default function Poligonos({ cu }) {
                   </button>
                   {poligono && !poligono.esPunto && (
                     <button type="button" className="btn btn-secundario" disabled={!sePuedeEditar}
-                      onClick={() => setTrazo(poligono.vertices.slice(0, -1))}>
+                      onClick={() => setTrazo(poligono.vertices.slice(0, -1).map((v, i) => ({ ...v, precisionM: poligono.precisionesM?.[i] ?? null })))}>
                       Partir del polígono vigente
                     </button>
                   )}
                 </div>
                 <p className="nota">
                   {trazo.length} {trazo.length === 1 ? 'vértice' : 'vértices'}
+                  {trazo.some((v) => v.precisionM != null) ? ` (${trazo.filter((v) => v.precisionM != null).length} del GPS)` : ''}
                   {trazo.length >= 3 && !problemaTrazo ? ` · ${areaHa(trazo).toLocaleString('es-BO', { maximumFractionDigits: 2 })} ha aproximadas` : ''}
                   {gps != null ? ` · última ubicación del GPS con precisión de ${Math.round(gps)} m` : ''}
                 </p>
@@ -376,9 +391,9 @@ export default function Poligonos({ cu }) {
                 <p className="panel-texto">Latitud y longitud de un punto dentro del predio, con 6 decimales.</p>
                 <div className="fila">
                   <Campo name="lat" etiqueta="Latitud" valor={punto.lat} error={erroresPunto.lat} placeholder="Ej.: -17.456789"
-                    onChange={(e) => setPunto({ ...punto, lat: e.target.value })} inputMode="decimal" disabled={!sePuedeEditar} />
+                    onChange={(e) => setPunto({ lat: e.target.value, lon: punto.lon })} inputMode="decimal" disabled={!sePuedeEditar} />
                   <Campo name="lon" etiqueta="Longitud" valor={punto.lon} error={erroresPunto.lon} placeholder="Ej.: -63.123456"
-                    onChange={(e) => setPunto({ ...punto, lon: e.target.value })} inputMode="decimal" disabled={!sePuedeEditar} />
+                    onChange={(e) => setPunto({ lat: punto.lat, lon: e.target.value })} inputMode="decimal" disabled={!sePuedeEditar} />
                 </div>
                 <div className="barra-dibujo">
                   <button type="button" className="btn btn-secundario" onClick={() => usarGps('punto')}

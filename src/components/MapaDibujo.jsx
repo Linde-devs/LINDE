@@ -9,7 +9,8 @@ const icono = (n, primero) =>
 
 // RF-04. Mapa para dibujar el contorno del predio: cada clic agrega un vértice y los vértices se arrastran para
 // ajustarlos. El polígono vigente, si lo hay, se muestra en gris como referencia.
-// Es un componente controlado: los vértices ({ lon, lat }, sin repetir el primero) los guarda la pantalla.
+// Es un componente controlado: los vértices ({ lon, lat, precisionM? }, sin repetir el primero) los guarda la pantalla.
+// precisionM solo la tienen los vértices tomados del GPS (RF-04).
 export default function MapaDibujo({ vertices, onChange, referencia, habilitado = true }) {
   const contenedor = useRef(null)
   const mapa = useRef(null)
@@ -78,6 +79,8 @@ export default function MapaDibujo({ vertices, onChange, referencia, habilitado 
     }
     vertices.forEach((v, i) => {
       const marcador = L.marker([v.lat, v.lon], { icon: icono(i + 1, i === 0), draggable: habilitado })
+      // RF-04: los vértices del GPS muestran su precisión. Al arrastrarlo, el vértice pasa a ser manual y la pierde.
+      marcador.bindTooltip(v.precisionM != null ? `Vértice ${i + 1} · GPS ±${v.precisionM} m` : `Vértice ${i + 1}`)
       marcador.on('dragend', () => {
         const p = marcador.getLatLng()
         const copia = [...actual.current.vertices]

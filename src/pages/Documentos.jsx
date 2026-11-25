@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Plus, Trash2, Upload, X } from 'lucide-react'
+import { Plus, ShieldCheck, Trash2, Upload, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ADMIN } from '../data/casosUso.js'
 import Campo from '../components/Campo.jsx'
@@ -226,6 +226,13 @@ export default function Documentos({ cu }) {
             <Plus size={16} />
             Agregar documento
           </button>
+        )}
+        {/* Siguiente paso del registro: polígono, documentos y después revisar que no falte nada (CU-07). */}
+        {puedeEditar && (
+          <Link to={`/app/validacion?predio=${seleccionado}`} className="btn btn-secundario">
+            <ShieldCheck size={16} />
+            Validar predio
+          </Link>
         )}
       </Encabezado>
 

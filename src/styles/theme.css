@@ -437,3 +437,23 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 /* Consulta pública: el contenedor centrado con márgenes, como el resto de las pantallas */
 .consulta > .contenedor { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
 @media (max-width: 800px) { .consulta > .contenedor { padding: 16px; } }
+
+/* RF-08: imágenes satelitales con el contorno del predio */
+.imagenes-satelitales { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.imagen-satelital { margin: 0; }
+.imagen-satelital-marco { position: relative; border: 1px solid var(--color-borde); border-radius: 6px; overflow: hidden; background: #222; }
+.imagen-satelital-marco img { display: block; width: 100%; height: auto; }
+.imagen-satelital-marco svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.imagen-satelital-marco polygon, .imagen-satelital-marco circle {
+  fill: none; stroke: #FACC15; stroke-width: 2; vector-effect: non-scaling-stroke;
+}
+.imagen-satelital-marco circle { fill: #FACC15; }
+.imagen-satelital figcaption { margin-top: 6px; font-size: 13px; color: var(--color-texto-2); }
+@media (max-width: 800px) { .imagenes-satelitales { grid-template-columns: 1fr; } }
+
+/* RF-07: zonas fuera del título o de la autorización */
+.zonas-capas { list-style: none; margin: 8px 0 0; padding: 0; font-size: 13px; }
+.zonas-capas li { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.zona-muestra { width: 14px; height: 14px; border-radius: 3px; flex: none; }
+.zona-alerta .zona-muestra { background: rgba(198, 40, 40, 0.45); border: 2px solid #C62828; }
+.zona-margen .zona-muestra { background: rgba(230, 126, 34, 0.45); border: 2px solid #E67E22; }

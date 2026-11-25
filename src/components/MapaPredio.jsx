@@ -10,11 +10,14 @@ const SANTA_CRUZ = [-17.78, -63.18]
 // Solo es una vista; el dibujo con clics está en MapaDibujo (RF-04).
 // "referencia" es otra geometría que se dibuja en gris punteado debajo, por ejemplo una versión anterior (RNF-05).
 // Las coordenadas llegan como { lon, lat } (orden GeoJSON); Leaflet usa [lat, lon].
-export default function MapaPredio({ vertices, referencia }) {
+// "zonas" son las partes del predio fuera del título o de la autorización (RF-07), que se pintan encima en rojo;
+// las que quedan dentro de la tolerancia, en naranja.
+export default function MapaPredio({ vertices, referencia, zonas }) {
   const contenedor = useRef(null)
   const mapa = useRef(null)
   const capa = useRef(null)
   const capaReferencia = useRef(null)
+  const capaZonas = useRef(null)
 
   // El mapa se crea una sola vez y se destruye al salir de la pantalla.
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function MapaPredio({ vertices, referencia }) {
     }).addTo(m)
     capaReferencia.current = L.layerGroup().addTo(m)
     capa.current = L.layerGroup().addTo(m)
+    capaZonas.current = L.layerGroup().addTo(m)
 
     // Coordenadas bajo el cursor, con 6 decimales como pide el RF-05.
     const Coordenadas = L.Control.extend({
@@ -73,6 +77,18 @@ export default function MapaPredio({ vertices, referencia }) {
       m.fitBounds(poligono.getBounds(), { padding: [24, 24] })
     }
   }, [vertices])
+
+  // RF-07: zonas sin cubrir, con su área y porcentaje al pasar el cursor.
+  useEffect(() => {
+    if (!mapa.current) return
+    capaZonas.current.clearLayers()
+    for (const z of zonas ?? []) {
+      const color = z.superaTolerancia ? '#C62828' : '#E67E22'
+      L.geoJSON(z.geometria, { style: { color, weight: 2, fillColor: color, fillOpacity: 0.45 } })
+        .bindTooltip(`${z.titulo}: ${z.areaHa.toLocaleString('es-BO', { maximumFractionDigits: 2 })} ha (${z.porcentaje.toLocaleString('es-BO')} %)`)
+        .addTo(capaZonas.current)
+    }
+  }, [zonas])
 
   // Geometría de referencia: se dibuja debajo y el mapa se encuadra para que se vean las dos.
   useEffect(() => {
